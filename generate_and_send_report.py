@@ -80,6 +80,6 @@ if __name__ == "__main__":
 
     output_image = 'failure_statistics.png'
     generate_bar_graph(statistics, output_image)
-    email_body = "Attached is the failure statistics report fpr the past {days} days.".format(days=50)
+    email_body = "Attached is the failure statistics report for the past {days} days.".format(args.days)
     subject = f"Failure Statistics Report {datetime.datetime.now()}"
     send_email(args.email, subject, email_body, output_image)

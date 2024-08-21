@@ -5,12 +5,14 @@ import argparse
 import json
 from collections import defaultdict
 from reason_conversion import reason_conversion  # Import the conversion table
+date_pattern = re.compile(r'\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2}')
 
 def convert_reason(long_reason):
     return reason_conversion.get(long_reason, long_reason)
 
 def parse_log_file(file_path):
     failure_pattern = re.compile(r'Failure: (.+)')
+    dead_pattern = re.compile(r'Dead: (.+)')
     job_pattern = re.compile(r'\d{7,}')
     failures = defaultdict(lambda: {"count": 0, "job_ids": [], "date": ""})
     current_failure = None
@@ -20,17 +22,25 @@ def parse_log_file(file_path):
             if failure_match:
                 long_reason = failure_match.group(1)
                 short_reason = convert_reason(long_reason)
-                print(f"Converted {long_reason}")
-                print(f"to {short_reason}")
                 current_failure = short_reason
             else:
-                job_ids = job_pattern.findall(line)
-                if job_ids:
-                    if current_failure:
-                        failures[current_failure]["job_ids"].extend(job_ids)
-                        failures[current_failure]["count"] += 1
-                        failures[current_failure]["date"] = file_path.split('/')[-2]
-                        print(f"found date {failures[current_failure]['date']}")
+                dead_match = dead_pattern.search(line)
+                if dead_match:
+                    long_reason = dead_match.group(1)
+                    short_reason = convert_reason(long_reason)
+                    current_failure = short_reason
+                else:
+                    job_ids = job_pattern.findall(line)
+                    if job_ids:
+                        if current_failure:
+                            failures[current_failure]["job_ids"].extend(job_ids)
+                            failures[current_failure]["count"] += 1
+                            match = date_pattern.search(file_path)
+                            if match:
+                                extracted_date = match.group(0).split('_')[0]
+                            else:
+                                extracted_date = "unknown"
+                            failures[current_failure]["date"] = extracted_date
 
     return failures
 
@@ -44,6 +54,7 @@ def store_failures_in_db(db_name, failures):
             CREATE TABLE IF NOT EXISTS failures (
                 id INTEGER PRIMARY KEY,
                 reason TEXT NOT NULL,
+                directory TEXT NOT NULL,
                 job_id TEXT NOT NULL
             )
         ''')
@@ -53,9 +64,9 @@ def store_failures_in_db(db_name, failures):
             try:
                 for job_id in data['job_ids']:
                     cursor.execute('''
-                        INSERT INTO failures (reason, job_id)
-                        VALUES (?, ?)
-                    ''', (reason, job_id))
+                        INSERT INTO failures (reason, job_id, directory)
+                        VALUES (?, ?, ?)
+                    ''', (reason, job_id, data['directory']))
                     conn.commit()  # Commit after inserting each reason's job_ids
                 
             except sqlite3.Error as e:
@@ -72,7 +83,8 @@ def store_failures_in_db(db_name, failures):
 def get_statistics(db_name):
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
-    cursor.execute("SELECT reason, COUNT(*), GROUP_CONCAT(job_id) FROM failures GROUP BY reason ORDER BY COUNT(*) DESC LIMIT 10")
+    # return only the top 10 reasons
+    cursor.execute("SELECT reason, COUNT(*), directory FROM failures GROUP BY reason ORDER BY COUNT(*) DESC LIMIT 10")
     rows = cursor.fetchall()
     conn.close()
     
@@ -80,7 +92,23 @@ def get_statistics(db_name):
     for row in rows:
         reason, count, job_ids = row
         statistics[reason] = {"count": count, "job_ids": job_ids.split(',')}
+        
+    return statistics
+
+def get_statistics_by_error_message(db_name, error_message):
+    conn = sqlite3.connect(db_name)
+    cursor = conn.cursor()
+    cursor.execute("SELECT reason, GROUP_CONCAT(job_id), directory FROM failures WHERE reason LIKE ? GROUP BY reason, directory ORDER BY COUNT(*) DESC", (f"%{error_message}%",))
+    rows = cursor.fetchall()
+    conn.close()
     
+    statistics = {}
+    for row in rows:
+        reason, job_ids, directory = row
+        if reason not in statistics:
+            statistics[reason] = {"job_ids": [], "directory": directory}
+        statistics[reason]["job_ids"].extend(job_ids.split(','))
+
     return statistics
 
 def print_statistics(statistics):
@@ -89,6 +117,7 @@ def print_statistics(statistics):
         print(f"{reason}: {data['count']} occurrences")
         print("Jobs:")
         print(", ".join(data['job_ids']))
+        print(", ".join(data['directory']))
         print("")
 
 def main():
@@ -101,7 +130,10 @@ def main():
 
     args = parser.parse_args()
     if args.get_statistics:
-        statistics = get_statistics(args.db_name)
+        if args.error_message:
+            statistics = get_statistics_by_error_message(args.db_name, args.error_message)
+        else:
+            statistics = get_statistics(args.db_name)
         if args.json:
             print(json.dumps(statistics, indent=2))
         else:
@@ -111,19 +143,21 @@ def main():
             print("Error: --log_directory is required when not using --get_statistics")
             exit(1)
 
-        all_failures = defaultdict(lambda: {"count": 0, "job_ids": []})
+        all_failures = defaultdict(lambda: {"count": 0, "directory": "", "job_ids": []})
         for log_file in os.listdir(args.log_directory):
             if log_file.endswith("scrape.log"):
                 log_file_path = os.path.join(args.log_directory, log_file)
                 failures = parse_log_file(log_file_path)
-                if error_message:
+                if args.error_message is not None:
                     for reason, data in failures.items():
-                        if error_message in reason:
+                        if args.error_message in reason:
                             all_failures[reason]["count"] += data["count"]
+                            all_failures[reason]["directory"] = args.log_directory
                             all_failures[reason]["job_ids"].extend(data["job_ids"])
                 else:
                     for reason, data in failures.items():
                         all_failures[reason]["count"] += data["count"]
+                        all_failures[reason]["directory"] = args.log_directory
                         all_failures[reason]["job_ids"].extend(data["job_ids"])
 
         store_failures_in_db(args.db_name, all_failures)
