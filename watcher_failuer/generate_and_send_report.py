@@ -150,6 +150,7 @@ if __name__ == "__main__":
     parser.add_argument('--db_name', required=True, help='The name of the SQLite database')
     parser.add_argument('--email', required=True, help='The email address to send the report to')
     parser.add_argument('--log_directory', help='Directory containing log files to process')
+    parser.add_argument('--user_name', help='The user name in directories to scan', default='teuthology')
     parser.add_argument('--days', type=int, help='Number of days to scan back', default=7)
     parser.add_argument('--error_message', help='only find that error message and send the report about that error message by dates', default=None)
     parser.add_argument('--keep_db', help='Keep the database after sending the report', default=False)
@@ -162,19 +163,21 @@ if __name__ == "__main__":
     else:
         if args.log_directory:
             subprocess.run(
-                ['python', 'scan_scrapy_directories.py', '--log_directory', args.log_directory, '--days', str(args.days), '--db_name', args.db_name]
+                ['python', 'scan_scrapy_directories.py', '--log_directory', args.log_directory, '--days', str(args.days), '--db_name', args.db_name, '--user_name', args.user_name]
             )
 
     statistics = get_statistics(args.db_name, args.error_message)
     email_body = ""
     # send emails to: Kamoltat Sirivadhna <ksirivad@redhat.com>, Neha Ojha <nojha@redhat.com>, Radoslaw Zarzynski <rzarzyns@redhat.com>, Laura Flores <lflores@redhat.com>, Nitzan Mordechai <nmordech@redhat.com>, Yaarit Hatuka <yhatuka@redhat.com>
-    args.email = "Kamoltat Sirivadhna <ksirivad@redhat.com>, Neha Ojha <nojha@redhat.com>, Radoslaw Zarzynski <rzarzyns@redhat.com>, Laura Flores <lflores@redhat.com>, Nitzan Mordechai <nmordech@redhat.com>, Yaarit Hatuka <yhatuka@redhat.com>"
+    #args.email = "Kamoltat Sirivadhna <ksirivad@redhat.com>, Neha Ojha <nojha@redhat.com>, Radoslaw Zarzynski <rzarzyns@redhat.com>, Laura Flores <lflores@redhat.com>, Nitzan Mordechai <nmordech@redhat.com>, Yaarit Hatuka <yhatuka@redhat.com>"
+    scan_report_start_date = datetime.date.today() - datetime.timedelta(days=args.days)
+    scan_report_end_date = datetime.date.today()
+    subject = f"Failure Statistics Report for {scan_report_start_date} to {scan_report_end_date}"
     
     if args.error_message:
         output_image = f"{args.error_message}_failure_statistics.png"
         generate_error_message_line_plot(statistics, output_image)
         email_body = f"Attached is the failure statistics report for the error message: {args.error_message}"
-        subject = f"Failure Statistics Report for {args.error_message} {datetime.datetime.now()}"
         send_email(args.email, subject, email_body, output_image)
         cleanup(args.keep_db, args.db_name)
         exit(0)
