@@ -6,10 +6,13 @@ import smtplib
 from email.message import EmailMessage
 import matplotlib.pyplot as plt
 import textwrap
+from pathlib import Path
+
+path = Path(__file__).parent.absolute()
 
 def get_statistics(db_name):
     result = subprocess.run(
-        ['python', 'scan_scrpy.py', '--db_name', db_name, '--get_statistics', '--json'],
+        ['python', f'{path}/scan_scrpy.py', '--db_name', db_name, '--get_statistics', '--json'],
         capture_output=True,
         text=True
     )
@@ -69,7 +72,7 @@ if __name__ == "__main__":
 
     if args.log_directory:
         subprocess.run(
-            ['python', 'scan_scrapy_directories.py', '--log_directory', args.log_directory, '--days', str(args.days), '--db_name', args.db_name]
+            ['python', f'{path}/scan_scrapy_directories.py', '--log_directory', args.log_directory, '--days', str(args.days), '--db_name', args.db_name]
         )
 
     try:
@@ -78,8 +81,9 @@ if __name__ == "__main__":
         print(f"Failed to get statistics: {e}")
         exit(1)
 
-    output_image = 'failure_statistics.png'
+    output_image = f"{path}/failure_statistics.png"
     generate_bar_graph(statistics, output_image)
+    subject = f"Failure Statistics Report {datetime.datetime.date.today()} to {datetime.datetime.date.today() - datetime.timedelta(days=args.days)}"
     email_body = "Attached is the failure statistics report for the past {days} days.".format(args.days)
-    subject = f"Failure Statistics Report {datetime.datetime.now()}"
+    
     send_email(args.email, subject, email_body, output_image)

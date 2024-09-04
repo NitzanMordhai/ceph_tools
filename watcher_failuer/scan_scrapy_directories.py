@@ -4,6 +4,9 @@ import datetime
 import subprocess
 import glob
 import argparse
+from pathlib import Path
+
+path = Path(__file__).parent.absolute()
 
 def scan_directories_and_process_logs(log_directory, days_to_scan, db_name):
     today = datetime.date.today()
@@ -35,7 +38,7 @@ def scan_directories_and_process_logs(log_directory, days_to_scan, db_name):
                 if os.path.exists(log_directory_path):
                     try:
                         result = subprocess.run(
-                            ['python', 'scan_scrpy.py', '--db_name', db_name, '--log_directory', dir_path],
+                            ['python', f'{path}/scan_scrpy.py', '--db_name', db_name, '--log_directory', dir_path],
                             text=True,
                             check=True  # Ensure subprocess raises an exception on error
                         )

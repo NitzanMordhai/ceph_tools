@@ -10,10 +10,13 @@ from collections import defaultdict
 import numpy as np
 from matplotlib import cm
 import re
+from pathlib import Path
+
+path = Path(__file__).parent.absolute()
 
 def get_statistics(db_name, error_message=None):
     try:
-        command = ['python', 'scan_scrpy.py', '--db_name', db_name, '--get_statistics']
+        command = ['python', f'{path}/scan_scrpy.py', '--db_name', db_name, '--get_statistics']
         if error_message:
             command.extend(['--error_message', error_message])
         command.extend(['--json'])
@@ -134,13 +137,13 @@ def cleanup(keep_db, db_name):
     if not keep_db:
         try:
             subprocess.run(
-                ['rm', db_name]
+                ['rm', f'{path}/{db_name}']
             )
         except subprocess.CalledProcessError as e:
             print(f"Error removing database: {e.stderr}")
     try:
         subprocess.run(
-            ['rm', 'failure_statistics.png']
+            ['rm', f'{path}/failure_statistics.png']
         )
     except subprocess.CalledProcessError as e:
         print(f"Error removing image: {e.stderr}")
@@ -157,12 +160,12 @@ if __name__ == "__main__":
 
     if args.error_message:
         subprocess.run(
-            ['python', 'scan_scrapy_error_message.py', '--log_directory', args.log_directory, '--error_message', args.error_message, '--db_name', args.db_name]
+            ['python', f'{path}/scan_scrapy_error_message.py', '--log_directory', args.log_directory, '--error_message', args.error_message, '--db_name', args.db_name]
         )
     else:
         if args.log_directory:
             subprocess.run(
-                ['python', 'scan_scrapy_directories.py', '--log_directory', args.log_directory, '--days', str(args.days), '--db_name', args.db_name]
+                ['python', f'{path}/scan_scrapy_directories.py', '--log_directory', args.log_directory, '--days', str(args.days), '--db_name', args.db_name]
             )
 
     statistics = get_statistics(args.db_name, args.error_message)
@@ -171,7 +174,7 @@ if __name__ == "__main__":
     args.email = "Kamoltat Sirivadhna <ksirivad@redhat.com>, Neha Ojha <nojha@redhat.com>, Radoslaw Zarzynski <rzarzyns@redhat.com>, Laura Flores <lflores@redhat.com>, Nitzan Mordechai <nmordech@redhat.com>, Yaarit Hatuka <yhatuka@redhat.com>"
     
     if args.error_message:
-        output_image = f"{args.error_message}_failure_statistics.png"
+        output_image = f"{path}/{args.error_message}_failure_statistics.png"
         generate_error_message_line_plot(statistics, output_image)
         email_body = f"Attached is the failure statistics report for the error message: {args.error_message}"
         subject = f"Failure Statistics Report for {args.error_message} {datetime.datetime.now()}"
@@ -179,7 +182,7 @@ if __name__ == "__main__":
         cleanup(args.keep_db, args.db_name)
         exit(0)
 
-    output_image = 'failure_statistics.png'
+    output_image = f"{path}/failure_statistics.png"
     email_body = f"Attached is the failure statistics report fpr the past {args.days} days.\n\n"
     email_body += generate_bar_graph(statistics, output_image)
     
