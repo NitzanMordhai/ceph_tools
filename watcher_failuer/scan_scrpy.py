@@ -5,6 +5,9 @@ import argparse
 import json
 from collections import defaultdict
 from reason_conversion import reason_conversion  # Import the conversion table
+from pathlib import Path
+
+path = Path(__file__).parent.absolute()
 date_pattern = re.compile(r'\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2}')
 
 def convert_reason(long_reason):
@@ -129,11 +132,14 @@ def main():
     parser.add_argument('--error_message', type=str, help='Error message to search for.')
 
     args = parser.parse_args()
+    db_name = f"{path}/{args.db_name}"
+    log_directory = f"{path}/{args.log_directory}"
+
     if args.get_statistics:
         if args.error_message:
-            statistics = get_statistics_by_error_message(args.db_name, args.error_message)
+            statistics = get_statistics_by_error_message(db_name, args.error_message)
         else:
-            statistics = get_statistics(args.db_name)
+            statistics = get_statistics(db_name)
         if args.json:
             print(json.dumps(statistics, indent=2))
         else:
@@ -160,9 +166,9 @@ def main():
                         all_failures[reason]["directory"] = args.log_directory
                         all_failures[reason]["job_ids"].extend(data["job_ids"])
 
-        store_failures_in_db(args.db_name, all_failures)
+        store_failures_in_db(db_name, all_failures)
         if args.get_statistics:
-            statistics = get_statistics(args.db_name)
+            statistics = get_statistics(db_name)
 
             if args.json:
                 print(json.dumps(statistics, indent=2))
