@@ -8,17 +8,18 @@ from pathlib import Path
 
 path = Path(__file__).parent.absolute()
 
-def scan_directories_and_process_logs(log_directory, days_to_scan, db_name):
+def scan_directories_and_process_logs(log_directory, days_to_scan, db_name, user_name='teuthology'):
     today = datetime.date.today()
     start_date = today - datetime.timedelta(days=days_to_scan)
 
-    pattern = os.path.join(log_directory, 'teuthology-*-rados-main-distro-default-smithi')
+    pattern = os.path.join(log_directory, f'{user_name}-*-rados-main-distro-default-smithi')
+    regex_pattern = re.escape(user_name) + r'-\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2}-rados-main-distro-default-smithi'
     
     directories = glob.glob(pattern)
     print(f"Found {len(directories)} directories matching the pattern.")
     
     for dir_path in directories:
-        match = re.search(r'teuthology-(\d{4}-\d{2}-\d{2})_(\d{2}:\d{2}:\d{2})-rados-main-distro-default-smithi', dir_path)
+        match = re.search(regex_pattern, dir_path)
         
         if match:
             dir_date_str = match.group(1)
@@ -53,6 +54,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Scan directories and process logs.')
     parser.add_argument('--log_directory', type=str, help='Directory containing logs', required=True)
     parser.add_argument('--days', type=int, help='Number of days to scan back', required=True)
+    parser.add_argument('--user_name', type=str, help='The user name in directories to scan', default='teuthology')
     parser.add_argument('--db_name', type=str, help='Name of the database', required=True)
     args = parser.parse_args()
 
