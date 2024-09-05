@@ -1,13 +1,10 @@
 import os
 import re
 import datetime
-import subprocess
 import glob
 import argparse
-from pathlib import Path
 from scan_scrpy import main as scan_scrpy
 
-path = Path(__file__).parent.absolute()
 
 def scan_directories_and_process_logs(log_directory, days_to_scan, db_name, user_name='teuthology'):
     today = datetime.date.today()
