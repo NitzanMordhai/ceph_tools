@@ -12,6 +12,8 @@ from matplotlib import cm
 import re
 from pathlib import Path
 from scan_scrpy import main as scan_scrpy
+from scan_scrapy_error_message import main as scan_scrapy_error_message
+from scan_scrapy_directories import main as scan_scrapy_directories
 
 path = Path(__file__).parent.absolute()
 
@@ -146,14 +148,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.error_message:
-        subprocess.run(
-            ['python', f'{path}/scan_scrapy_error_message.py', '--log_directory', args.log_directory, '--error_message', args.error_message, '--db_name', args.db_name]
-        )
+        scan_scrapy_error_message(args.log_directory, args.date, args.db_name, args.error_message)
     else:
         if args.log_directory:
-            subprocess.run(
-                ['python', f'{path}/scan_scrapy_directories.py', '--log_directory', args.log_directory, '--days', str(args.days), '--db_name', args.db_name, '--user_name', args.user_name]
-            )
+            scan_scrapy_error_message(args.log_directory, str(args.days), args.db_name, args.user_name)
 
     statistics = get_statistics(args.db_name, args.error_message)
     email_body = ""

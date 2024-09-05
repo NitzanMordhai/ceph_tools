@@ -1,13 +1,10 @@
 import os
 import re
 import datetime
-import subprocess
 import glob
 import argparse
-from pathlib import Path
 from scan_scrpy import main as scan_scrpy
 
-path = Path(__file__).parent.absolute()
 
 def scan_directories_for_error_message(log_directory, date, db_name, error_message):
     today = datetime.date.today()
