@@ -148,10 +148,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.error_message:
-        scan_scrapy_error_message(args.log_directory, args.date, args.db_name, args.error_message)
+        dir_results = scan_scrapy_error_message(args.log_directory, args.date, args.db_name, args.error_message)
     else:
         if args.log_directory:
-            scan_scrapy_error_message(args.log_directory, str(args.days), args.db_name, args.user_name)
+            dir_results = scan_scrapy_directories(args.log_directory, args.days, args.db_name, args.user_name)
 
     statistics = get_statistics(args.db_name, args.error_message)
     email_body = ""
@@ -170,7 +170,10 @@ if __name__ == "__main__":
         exit(0)
 
     output_image = f"{path}/failure_statistics.png"
-    email_body = f"Attached is the failure statistics report fpr the past {args.days} days.\n\n"
+    email_body = f"Attached is the failure statistics report for the past {args.days} days.\n\n"
+    email_body += "Directories scanned:\n"
+    for result in dir_results:
+        email_body += f"   {result}\n"
     email_body += generate_bar_graph(statistics, output_image)
 
     send_email(args.email, subject, email_body, output_image)

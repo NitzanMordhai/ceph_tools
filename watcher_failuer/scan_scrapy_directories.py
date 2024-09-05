@@ -6,18 +6,18 @@ import argparse
 from scan_scrpy import main as scan_scrpy
 
 
-def scan_directories_and_process_logs(log_directory, days_to_scan, db_name, user_name='teuthology'):
+def main(log_directory, days_to_scan, db_name, user_name='teuthology', flavor='squid'):
     today = datetime.date.today()
     start_date = today - datetime.timedelta(days=days_to_scan)
 
     branch_name = 'wip-yuri*-testing-*'
     suite_name = 'rados'
 
-    pattern = os.path.join(log_directory, f'{user_name}-*-{suite_name}-{branch_name}-distro-default-smithi')
-    regex_pattern = fr'{user_name}-(\d{{4}}-\d{{2}}-\d{{2}})_(\d{{2}}:\d{{2}}:\d{{2}})-{suite_name}-{branch_name}-distro-default-smithi'
+    pattern = os.path.join(log_directory, f'{user_name}-*-{suite_name}-{branch_name}-{flavor}-distro-default-smithi')
+    regex_pattern = fr'{user_name}-(\d{{4}}-\d{{2}}-\d{{2}})_(\d{{2}}:\d{{2}}:\d{{2}})-{suite_name}-{branch_name}-{flavor}-distro-default-smithi'
     directories = glob.glob(pattern)
     print(f"Found {len(directories)} directories matching the pattern.")
-    
+    dir_results = []
     for dir_path in directories:
         parts = os.path.basename(dir_path).split('-')
         dir_date_str = parts[1] + '-' + parts[2] + '-' + parts[3].split('_')[0]
@@ -38,9 +38,13 @@ def scan_directories_and_process_logs(log_directory, days_to_scan, db_name, user
                 log_directory_path = os.path.join(dir_path, 'scrape.log')
                 if os.path.exists(log_directory_path):
                     result = scan_scrpy(db_name, dir_path, False, False, None)
+                    dir_results.append(dir_path)
                 else:
                     print(f"No scrape.log found in {dir_path}")
-                # Add more logging or actions as needed
+
+    for dir_result in dir_results:
+        print(f" results from {dir_result}")
+    return dir_results
 
 
 # Example usage:
@@ -52,4 +56,4 @@ if __name__ == "__main__":
     parser.add_argument('--db_name', type=str, help='Name of the database', required=True)
     args = parser.parse_args()
 
-    scan_directories_and_process_logs(args.log_directory, args.days, args.db_name, args.user_name)
+    main(args.log_directory, args.days, args.db_name, args.user_name)

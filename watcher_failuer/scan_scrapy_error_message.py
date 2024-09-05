@@ -6,7 +6,7 @@ import argparse
 from scan_scrpy import main as scan_scrpy
 
 
-def scan_directories_for_error_message(log_directory, date, db_name, error_message):
+def main(log_directory, date, db_name, error_message):
     today = datetime.date.today()
     start_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
     arg_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
@@ -42,4 +42,4 @@ if __name__ == "__main__":
     parser.add_argument('--db_name', type=str, help='Name of the database', required=True)
     args = parser.parse_args()
 
-    scan_directories_for_error_message(args.log_directory, args.date, args.db_name, args.error_message)
+    main(args.log_directory, args.date, args.db_name, args.error_message)
