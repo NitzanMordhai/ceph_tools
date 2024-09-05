@@ -1,11 +1,12 @@
 import os
 import re
 import datetime
-import subprocess
 import glob
 import argparse
+from scan_scrpy import main as scan_scrpy
 
-def scan_directories_for_error_message(log_directory, date, db_name, error_message):
+
+def main(log_directory, date, db_name, error_message):
     today = datetime.date.today()
     start_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
     arg_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
@@ -27,14 +28,7 @@ def scan_directories_for_error_message(log_directory, date, db_name, error_messa
                 continue
             log_directory_path = os.path.join(dir_path, 'scrape.log')
             if os.path.exists(log_directory_path):
-                try:
-                    result = subprocess.run(
-                        ['python', 'scan_scrpy.py', '--db_name', db_name, '--log_directory', dir_path, '--error_message', error_message],
-                        text=True,
-                        check=True  # Ensure subprocess raises an exception on error
-                    )
-                except subprocess.CalledProcessError as e:
-                    print(f"Error processing {log_directory_path}: {e.stderr}")
+                result = scan_scrpy(db_name, dir_path, False, False, None)
             else:
                 print(f"No scrape.log found in {dir_path}")
 
@@ -48,4 +42,4 @@ if __name__ == "__main__":
     parser.add_argument('--db_name', type=str, help='Name of the database', required=True)
     args = parser.parse_args()
 
-    scan_directories_for_error_message(args.log_directory, args.date, args.db_name, args.error_message)
+    main(args.log_directory, args.date, args.db_name, args.error_message)

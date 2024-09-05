@@ -4,7 +4,9 @@ import sqlite3
 import argparse
 import json
 from collections import defaultdict
-from reason_conversion import reason_conversion  # Import the conversion table
+from reason_conversion import reason_conversion
+from pathlib import Path
+
 date_pattern = re.compile(r'\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2}')
 
 def convert_reason(long_reason):
@@ -46,7 +48,8 @@ def parse_log_file(file_path):
 
 def store_failures_in_db(db_name, failures):
     try:
-        conn = sqlite3.connect(db_name)
+        path = Path(__file__).parent.absolute()
+        conn = sqlite3.connect(f"{path}/{db_name}")
         cursor = conn.cursor()
 
         # Create the table if it doesn't exist
@@ -80,7 +83,7 @@ def store_failures_in_db(db_name, failures):
         if conn:
             conn.close()
 
-def get_statistics(db_name):
+def _get_statistics(db_name):
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     # return only the top 10 reasons
@@ -95,7 +98,7 @@ def get_statistics(db_name):
         
     return statistics
 
-def get_statistics_by_error_message(db_name, error_message):
+def _get_statistics_by_error_message(db_name, error_message):
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
     cursor.execute("SELECT reason, GROUP_CONCAT(job_id), directory FROM failures WHERE reason LIKE ? GROUP BY reason, directory ORDER BY COUNT(*) DESC", (f"%{error_message}%",))
@@ -120,7 +123,46 @@ def print_statistics(statistics):
         print(", ".join(data['directory']))
         print("")
 
-def main():
+def main(db_name, log_directory, json_out, get_statistics, error_message):
+    log_directory = f"{log_directory}"
+
+    if get_statistics:
+        if error_message:
+            statistics = _get_statistics_by_error_message(db_name, error_message)
+        else:
+            statistics = _get_statistics(db_name)
+
+        if json_out:
+            return json.dumps(statistics, indent=2)
+        else:
+            return statistics
+    else:
+        if not log_directory:
+            print("Error: --log_directory is required when not using --get_statistics")
+            return 1
+
+        all_failures = defaultdict(lambda: {"count": 0, "directory": "", "job_ids": []})
+        for log_file in os.listdir(log_directory):
+            if log_file.endswith("scrape.log"):
+                log_file_path = os.path.join(log_directory, log_file)
+                failures = parse_log_file(log_file_path)
+                if error_message is not None:
+                    for reason, data in failures.items():
+                        if error_message in reason:
+                            all_failures[reason]["count"] += data["count"]
+                            all_failures[reason]["directory"] = log_directory
+                            all_failures[reason]["job_ids"].extend(data["job_ids"])
+                else:
+                    for reason, data in failures.items():
+                        all_failures[reason]["count"] += data["count"]
+                        all_failures[reason]["directory"] = log_directory
+                        all_failures[reason]["job_ids"].extend(data["job_ids"])
+
+        store_failures_in_db(db_name, all_failures)
+        return 0
+
+if __name__ == "__main__":
+    import argparse
     parser = argparse.ArgumentParser(description='Scan log files and collect failure statistics.')
     parser.add_argument('--db_name', type=str, required=True, help='Name of the SQLite database.')
     parser.add_argument('--log_directory', type=str, help='Directory containing log files.')
@@ -129,45 +171,5 @@ def main():
     parser.add_argument('--error_message', type=str, help='Error message to search for.')
 
     args = parser.parse_args()
-    if args.get_statistics:
-        if args.error_message:
-            statistics = get_statistics_by_error_message(args.db_name, args.error_message)
-        else:
-            statistics = get_statistics(args.db_name)
-        if args.json:
-            print(json.dumps(statistics, indent=2))
-        else:
-            print_statistics(statistics)
-    else:
-        if not args.log_directory:
-            print("Error: --log_directory is required when not using --get_statistics")
-            exit(1)
 
-        all_failures = defaultdict(lambda: {"count": 0, "directory": "", "job_ids": []})
-        for log_file in os.listdir(args.log_directory):
-            if log_file.endswith("scrape.log"):
-                log_file_path = os.path.join(args.log_directory, log_file)
-                failures = parse_log_file(log_file_path)
-                if args.error_message is not None:
-                    for reason, data in failures.items():
-                        if args.error_message in reason:
-                            all_failures[reason]["count"] += data["count"]
-                            all_failures[reason]["directory"] = args.log_directory
-                            all_failures[reason]["job_ids"].extend(data["job_ids"])
-                else:
-                    for reason, data in failures.items():
-                        all_failures[reason]["count"] += data["count"]
-                        all_failures[reason]["directory"] = args.log_directory
-                        all_failures[reason]["job_ids"].extend(data["job_ids"])
-
-        store_failures_in_db(args.db_name, all_failures)
-        if args.get_statistics:
-            statistics = get_statistics(args.db_name)
-
-            if args.json:
-                print(json.dumps(statistics, indent=2))
-            else:
-                print_statistics(statistics)
-
-if __name__ == "__main__":
-    main()
+    main(args.db_name, args.log_directory, args.json, args.get_statistics, args.error_message)

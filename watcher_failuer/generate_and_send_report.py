@@ -10,25 +10,16 @@ from collections import defaultdict
 import numpy as np
 from matplotlib import cm
 import re
+from pathlib import Path
+from scan_scrpy import main as scan_scrpy
+from scan_scrapy_error_message import main as scan_scrapy_error_message
+from scan_scrapy_directories import main as scan_scrapy_directories
+
+path = Path(__file__).parent.absolute()
 
 def get_statistics(db_name, error_message=None):
-    try:
-        command = ['python', 'scan_scrpy.py', '--db_name', db_name, '--get_statistics']
-        if error_message:
-            command.extend(['--error_message', error_message])
-        command.extend(['--json'])
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            text=True
-        )
-        if result.returncode != 0:
-            print(f"scan_scrpy.py output: {result.stdout}")
-            raise Exception(f"Error in scan_scrpy.py: {result.stderr}")
-    except subprocess.CalledProcessError as e:
-        print(f"Error running scan_scrpy.py: {e.stderr}")
-        exit(1)
-    return json.loads(result.stdout)
+    statistics = scan_scrpy(db_name, None, True, True, error_message)
+    return json.loads(statistics)
 
 def generate_bar_graph(statistics, output_file):
     reasons = list(statistics.keys())
@@ -134,13 +125,13 @@ def cleanup(keep_db, db_name):
     if not keep_db:
         try:
             subprocess.run(
-                ['rm', db_name]
+                ['rm', f'{path}/{db_name}']
             )
         except subprocess.CalledProcessError as e:
             print(f"Error removing database: {e.stderr}")
     try:
         subprocess.run(
-            ['rm', 'failure_statistics.png']
+            ['rm', f'{path}/failure_statistics.png']
         )
     except subprocess.CalledProcessError as e:
         print(f"Error removing image: {e.stderr}")
@@ -150,40 +141,41 @@ if __name__ == "__main__":
     parser.add_argument('--db_name', required=True, help='The name of the SQLite database')
     parser.add_argument('--email', required=True, help='The email address to send the report to')
     parser.add_argument('--log_directory', help='Directory containing log files to process')
+    parser.add_argument('--user_name', help='The user name in directories to scan', default='teuthology')
     parser.add_argument('--days', type=int, help='Number of days to scan back', default=7)
     parser.add_argument('--error_message', help='only find that error message and send the report about that error message by dates', default=None)
     parser.add_argument('--keep_db', help='Keep the database after sending the report', default=False)
     args = parser.parse_args()
 
     if args.error_message:
-        subprocess.run(
-            ['python', 'scan_scrapy_error_message.py', '--log_directory', args.log_directory, '--error_message', args.error_message, '--db_name', args.db_name]
-        )
+        dir_results = scan_scrapy_error_message(args.log_directory, args.date, args.db_name, args.error_message)
     else:
         if args.log_directory:
-            subprocess.run(
-                ['python', 'scan_scrapy_directories.py', '--log_directory', args.log_directory, '--days', str(args.days), '--db_name', args.db_name]
-            )
+            dir_results = scan_scrapy_directories(args.log_directory, args.days, args.db_name, args.user_name)
 
     statistics = get_statistics(args.db_name, args.error_message)
     email_body = ""
     # send emails to: Kamoltat Sirivadhna <ksirivad@redhat.com>, Neha Ojha <nojha@redhat.com>, Radoslaw Zarzynski <rzarzyns@redhat.com>, Laura Flores <lflores@redhat.com>, Nitzan Mordechai <nmordech@redhat.com>, Yaarit Hatuka <yhatuka@redhat.com>
-    args.email = "Kamoltat Sirivadhna <ksirivad@redhat.com>, Neha Ojha <nojha@redhat.com>, Radoslaw Zarzynski <rzarzyns@redhat.com>, Laura Flores <lflores@redhat.com>, Nitzan Mordechai <nmordech@redhat.com>, Yaarit Hatuka <yhatuka@redhat.com>"
+    #args.email = "Kamoltat Sirivadhna <ksirivad@redhat.com>, Neha Ojha <nojha@redhat.com>, Radoslaw Zarzynski <rzarzyns@redhat.com>, Laura Flores <lflores@redhat.com>, Nitzan Mordechai <nmordech@redhat.com>, Yaarit Hatuka <yhatuka@redhat.com>"
+    scan_report_start_date = datetime.date.today() - datetime.timedelta(days=args.days)
+    scan_report_end_date = datetime.date.today()
+    subject = f"Failure Statistics Report for {scan_report_start_date} to {scan_report_end_date}"
     
     if args.error_message:
-        output_image = f"{args.error_message}_failure_statistics.png"
+        output_image = f"{path}/{args.error_message}_failure_statistics.png"
         generate_error_message_line_plot(statistics, output_image)
         email_body = f"Attached is the failure statistics report for the error message: {args.error_message}"
-        subject = f"Failure Statistics Report for {args.error_message} {datetime.datetime.now()}"
         send_email(args.email, subject, email_body, output_image)
         cleanup(args.keep_db, args.db_name)
         exit(0)
 
-    output_image = 'failure_statistics.png'
-    email_body = f"Attached is the failure statistics report fpr the past {args.days} days.\n\n"
+    output_image = f"{path}/failure_statistics.png"
+    email_body = f"Attached is the failure statistics report for the past {args.days} days.\n\n"
+    email_body += "Directories scanned:\n"
+    for result in dir_results:
+        email_body += f"   {result}\n"
     email_body += generate_bar_graph(statistics, output_image)
-    
-    subject = f"Failure Statistics Report {datetime.datetime.now()}"
+
     send_email(args.email, subject, email_body, output_image)
     cleanup(args.keep_db, args.db_name)
     exit(0)
