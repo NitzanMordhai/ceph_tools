@@ -12,19 +12,21 @@ def scan_directories_and_process_logs(log_directory, days_to_scan, db_name, user
     today = datetime.date.today()
     start_date = today - datetime.timedelta(days=days_to_scan)
 
-    pattern = os.path.join(log_directory, f'{user_name}-*-rados-main-distro-default-smithi')
-    regex_pattern = re.escape(user_name) + r'-\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2}-rados-main-distro-default-smithi'
-    
+    branch_name = 'wip-yuri*-testing-*'
+    suite_name = 'rados'
+
+    pattern = os.path.join(log_directory, f'{user_name}-*-{suite_name}-{branch_name}-distro-default-smithi')
+    regex_pattern = fr'{user_name}-(\d{{4}}-\d{{2}}-\d{{2}})_(\d{{2}}:\d{{2}}:\d{{2}})-{suite_name}-{branch_name}-distro-default-smithi'
     directories = glob.glob(pattern)
     print(f"Found {len(directories)} directories matching the pattern.")
     
     for dir_path in directories:
-        match = re.search(regex_pattern, dir_path)
-        
-        if match:
-            dir_date_str = match.group(1)
-            dir_time_str = match.group(2)
-            scrape_date_str = match.group(1)
+        parts = os.path.basename(dir_path).split('-')
+        dir_date_str = parts[1] + '-' + parts[2] + '-' + parts[3].split('_')[0]
+        dir_time_str = parts[3].split('_')[1]
+
+        if dir_date_str and dir_time_str:
+            scrape_date_str = dir_date_str
             
             try:
                 dir_date = datetime.datetime.strptime(f"{dir_date_str}_{dir_time_str}", '%Y-%m-%d_%H:%M:%S').date()
@@ -49,6 +51,7 @@ def scan_directories_and_process_logs(log_directory, days_to_scan, db_name, user
                     print(f"No scrape.log found in {dir_path}")
                 # Add more logging or actions as needed
 
+
 # Example usage:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Scan directories and process logs.')
@@ -58,4 +61,4 @@ if __name__ == "__main__":
     parser.add_argument('--db_name', type=str, help='Name of the database', required=True)
     args = parser.parse_args()
 
-    scan_directories_and_process_logs(args.log_directory, args.days, args.db_name)
+    scan_directories_and_process_logs(args.log_directory, args.days, args.db_name, args.user_name)

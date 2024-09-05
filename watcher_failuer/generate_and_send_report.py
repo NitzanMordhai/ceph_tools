@@ -188,8 +188,7 @@ if __name__ == "__main__":
     output_image = f"{path}/failure_statistics.png"
     email_body = f"Attached is the failure statistics report fpr the past {args.days} days.\n\n"
     email_body += generate_bar_graph(statistics, output_image)
-    
-    subject = f"Failure Statistics Report {datetime.datetime.now()}"
+
     send_email(args.email, subject, email_body, output_image)
     cleanup(args.keep_db, args.db_name)
     exit(0)
