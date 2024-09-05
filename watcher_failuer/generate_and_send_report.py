@@ -11,27 +11,13 @@ import numpy as np
 from matplotlib import cm
 import re
 from pathlib import Path
+from scan_scrpy import main as scan_scrpy
 
 path = Path(__file__).parent.absolute()
 
 def get_statistics(db_name, error_message=None):
-    try:
-        command = ['python', f'{path}/scan_scrpy.py', '--db_name', db_name, '--get_statistics']
-        if error_message:
-            command.extend(['--error_message', error_message])
-        command.extend(['--json'])
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            text=True
-        )
-        if result.returncode != 0:
-            print(f"scan_scrpy.py output: {result.stdout}")
-            raise Exception(f"Error in scan_scrpy.py: {result.stderr}")
-    except subprocess.CalledProcessError as e:
-        print(f"Error running scan_scrpy.py: {e.stderr}")
-        exit(1)
-    return json.loads(result.stdout)
+    statistics = scan_scrpy(db_name, None, True, True, error_message)
+    return json.loads(statistics)
 
 def generate_bar_graph(statistics, output_file):
     reasons = list(statistics.keys())
