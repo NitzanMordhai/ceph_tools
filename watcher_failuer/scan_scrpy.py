@@ -47,6 +47,7 @@ def parse_log_file(file_path):
     return failures
 
 def store_failures_in_db(db_name, failures):
+    print(f"Storing {len(failures)} failures in the database {db_name}")
     try:
         path = Path(__file__).parent.absolute()
         conn = sqlite3.connect(f"{path}/{db_name}")
@@ -84,18 +85,35 @@ def store_failures_in_db(db_name, failures):
             conn.close()
 
 def _get_statistics(db_name):
-    conn = sqlite3.connect(db_name)
-    cursor = conn.cursor()
-    # return only the top 10 reasons
-    cursor.execute("SELECT reason, COUNT(*), directory FROM failures GROUP BY reason ORDER BY COUNT(*) DESC LIMIT 10")
-    rows = cursor.fetchall()
-    conn.close()
-    
+    # Check if the database exists
+    print(f"Fetching statistics from the database {db_name}")
     statistics = {}
+    rows = []
+    try:
+        path = Path(__file__).parent.absolute()
+        db_name = f"{path}/{db_name}"
+        if not os.path.exists(db_name):
+            print(f"Error: Database {db_name} does not exist")
+            return {}
+        conn = sqlite3.connect(db_name)
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT reason, COUNT(*), directory FROM failures GROUP BY reason ORDER BY COUNT(*) DESC LIMIT 10")
+        rows = cursor.fetchall()
+        conn.close()
+    except sqlite3.Error as e:
+        print(f"Error fetching data from the database: {e}")
+        conn.close()
+        return {}
+    except Exception as e:
+        print(f"Error: {e}")
+        return {}
+    
     for row in rows:
         reason, count, job_ids = row
+        print(f"Reason: {reason}, Count: {count}, Job IDs: {job_ids}")
         statistics[reason] = {"count": count, "job_ids": job_ids.split(',')}
-        
+            
     return statistics
 
 def _get_statistics_by_error_message(db_name, error_message):

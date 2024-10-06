@@ -6,7 +6,7 @@ import argparse
 from scan_scrpy import main as scan_scrpy
 
 
-def main(log_directory, date, db_name, error_message):
+def main(log_directory, date, db_name, error_message, user_name, flavor):
     today = datetime.date.today()
     start_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
     arg_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
@@ -40,6 +40,8 @@ if __name__ == "__main__":
     parser.add_argument('--error_message', type=str, help='Error message to search for', required=True)
     parser.add_argument('--date', type=str, help='Date to scan back to', default=(datetime.date.today() - datetime.timedelta(days=365*2)).strftime('%Y-%m-%d'))
     parser.add_argument('--db_name', type=str, help='Name of the database', required=True)
+    parser.add_argument('--user_name', type=str, help='The user name in directories to scan', default='teuthology')
+    parser.add_argument('--flavor', type=str, help='The flavor in directories to scan', default='squid')
     args = parser.parse_args()
 
-    main(args.log_directory, args.date, args.db_name, args.error_message)
+    main(args.log_directory, args.date, args.db_name, args.error_message, args.user_name, args.flavor)
