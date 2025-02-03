@@ -1,5 +1,6 @@
 import datetime
 import json
+import os
 import subprocess
 import argparse
 import smtplib
@@ -10,12 +11,15 @@ from collections import defaultdict
 import numpy as np
 from matplotlib import cm
 import re
+import glob
 from pathlib import Path
 from scan_scrpy import main as scan_scrpy
 from scan_scrapy_error_message import main as scan_scrapy_error_message
 from scan_scrapy_directories import main as scan_scrapy_directories
+from trackers import RedmineConnector
 
 path = Path(__file__).parent.absolute()
+_verbose = False
 
 def get_statistics(db_name, error_message=None):
     statistics = scan_scrpy(db_name, None, True, True, error_message)
@@ -23,16 +27,21 @@ def get_statistics(db_name, error_message=None):
 
 def generate_bar_graph(statistics, output_file):
     reasons = list(statistics.keys())
-
+    tracker = RedmineConnector()
     email_body = "Top 10 Failure Reasons:\n"
 
     counts = [data['count'] for data in statistics.values()]
+
     wrapped_reasons = []
-    #wrapped_reasons = ['\n'.join(textwrap.wrap(reason, width=40)) for reason in reasons]
-    # we won't present the reasons, we will show maps to the reasons
     for i in range(len(reasons)):
         wrapped_reasons.append(i)
-        email_body += f"{i}: {reasons[i]}: {counts[i]} occurrences\n"
+        res = tracker.search_and_refine(reasons[i])
+        if len(res) != 0:
+            reasons[i] = res.get('link') + " " + reasons[i]
+
+        email_body += f"{i+1}: {reasons[i]}: {counts[i]} occurrences\n"
+
+    tracker.save_cache()
     plt.figure(figsize=(15, 15))
     bars = plt.barh(wrapped_reasons, counts, color='skyblue')
     plt.xlabel('Number of Occurrences')
@@ -99,10 +108,11 @@ def extract_date_time(directory):
     return match.group(0) if match else 'unknown'
 
 
-def send_email(to_email, subject, body, attachment_path):
+def prepare_email_message(subject, body, to_email, attachment_path):
     msg = EmailMessage()
     msg['Subject'] = subject
     msg['From'] = 'watcher@teuthology.com'
+    print(f"Sending email to: {to_email}")
     msg['To'] = to_email
     msg.set_content(body)
 
@@ -112,46 +122,135 @@ def send_email(to_email, subject, body, attachment_path):
 
     msg.add_attachment(file_data, maintype='image', subtype='png', filename=file_name)
 
+    send_email(msg)
+
+def cleanup(keep_db, db_name, image):
+    # ignore the error if the file does not exist
+    print(f"Cleaning up: {path}/{db_name} and {path}/{image}")
+    try:
+        os.remove(f'{path}/{db_name}')
+    except FileNotFoundError:
+        pass
+    
+    try:
+        os.remove(f'{path}/{image}')
+    except FileNotFoundError:
+        pass
+
+def get_all_versions(log_directory, days, db_name, user_name, branch_name, suite_name, to_email):
+    versions = ['octopus', 'pacific', 'quincy', 'squid', 'main', 'reef']
+    flavors = ['default', 'crimson']
+    email_body = ""
+    scan_report_start_date = datetime.date.today() - datetime.timedelta(days=days)
+    scan_report_end_date = datetime.date.today()
+    subject = f"Failure Statistics Report for {scan_report_start_date} to {scan_report_end_date}"
+    # create email body with html format and each version has its own section
+    for version in versions:
+        print(f"**************************Processing version: {version}************************")
+        if branch_name != '':
+            _branch_name = f'{branch_name}-{version}'
+        else:
+            _branch_name = f'{version}'
+        for flavor in flavors:
+            db_name_v = f'{db_name}_{version}_{flavor}'
+            dir_results = scan_scrapy_directories(log_directory, days, db_name_v, user_name, suite_name, _branch_name, flavor, _verbose)
+            statistics = get_statistics(db_name_v, None)
+            if statistics == {}: # skip if no data
+                continue
+            email_body += "Directories scanned for version: " + version + "\\" + flavor + "\n"
+            for result in dir_results:
+                email_body += f"   {result}\n"
+            email_body += generate_bar_graph(statistics, f"{path}/{version}_{flavor}_failure_statistics.png")
+            email_body += "\n\n"
+    print(f"     Email body: {email_body}")
+    prepare_email_message_versions(subject, email_body, to_email, path)
+    for version in versions:
+        for flavor in flavors:
+            cleanup(False, f'failures.db_{version}_{flavor}', f'{version}_{flavor}_failure_statistics.png')
+
+def get_all_bot_results(log_directory, days, db_name, user_name, branch_name, suite_name, flavor, to_email):
+    users = ['yuriw', 'teuthology']
+    for user in users:
+        print(f"-------------------Processing user: {user}------------------------")
+        if user == 'yuriw':
+            branch_name = 'wip-yuri*-testing-*'
+        elif user == 'teuthology':
+            branch_name = ''
+        else:
+            print("Unknown user")
+            exit(1)
+        print(f"Processing user: {user}")
+        get_all_versions(log_directory, days, db_name, user, branch_name, suite_name, to_email)
+
+def prepare_email_message_versions(subject, body, to_email, attachment_path):
+    
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = 'watcher@teuthology.com'
+    if isinstance(to_email, str):
+        to_email = to_email.replace(" ", ",")
+    elif isinstance(to_email, list):
+        # Join list into a comma-separated string
+        to_email = ", ".join(to_email)
+    msg['To'] = to_email
+    msg.set_content(body)
+    
+    # browse the attachment path and add the image to the email
+    directories = glob.glob(f"{attachment_path}/*_failure_statistics.png")
+    for directory in directories:
+        with open(directory, 'rb') as f:
+            file_data = f.read()
+            file_name = directory
+        print(f"Adding attachment: {file_name}")
+        msg.add_attachment(file_data, maintype='image', subtype='png', filename=file_name)
+    
+    send_email(msg)
+        
+def send_email(email_msg):
+    print(f"Sending email to: {email_msg['To']}")
     smtp_server = 'localhost'
     smtp_port = 25
-
     try:
         with smtplib.SMTP(smtp_server, smtp_port) as smtp:
-            smtp.send_message(msg)
+            smtp.send_message(email_msg)
     except Exception as e:
         print(f"Email sending failed: {e}")
-
-def cleanup(keep_db, db_name):
-    if not keep_db:
-        try:
-            subprocess.run(
-                ['rm', f'{path}/{db_name}']
-            )
-        except subprocess.CalledProcessError as e:
-            print(f"Error removing database: {e.stderr}")
-    try:
-        subprocess.run(
-            ['rm', f'{path}/failure_statistics.png']
-        )
-    except subprocess.CalledProcessError as e:
-        print(f"Error removing image: {e.stderr}")
+    finally:
+        print("Email sent successfully")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate and send failure statistics report')
     parser.add_argument('--db_name', required=True, help='The name of the SQLite database')
     parser.add_argument('--email', required=True, help='The email address to send the report to')
     parser.add_argument('--log_directory', help='Directory containing log files to process')
-    parser.add_argument('--user_name', help='The user name in directories to scan', default='teuthology')
+    parser.add_argument('--all_versions', help='Process all versions (ignoring branch name and using yuri test pattern)', default=False)
+    parser.add_argument('--user_name', help='The user name in directories to scan', default='yuriw')
+    parser.add_argument('--suite_name', help='The suite name in directories to scan', default='rados')
+    parser.add_argument('--branch_name', help='The branch name in directories to scan', default='wip-yuri*-testing-*')
+    parser.add_argument('--flavor', type=str, help='The flavor in directories to scan', default='default')
     parser.add_argument('--days', type=int, help='Number of days to scan back', default=7)
     parser.add_argument('--error_message', help='only find that error message and send the report about that error message by dates', default=None)
     parser.add_argument('--keep_db', help='Keep the database after sending the report', default=False)
+    parser.add_argument('--bot', help='Run as a bot results', action='store_true')
+    parser.add_argument('--verbose', help='Print verbose output', action='store_true')
     args = parser.parse_args()
 
+    _verbose = args.verbose
+    if args.bot:
+        print("Processing bot results")
+        get_all_bot_results(args.log_directory, args.days, args.db_name, args.user_name, args.branch_name, args.suite_name, args.flavor, args.email)
+        exit(0)
+
+    if args.all_versions:
+        print("Processing all versions - sending email to: ", args.email)
+        get_all_versions(args.log_directory, args.days, args.db_name, args.user_name, args.branch_name, args.suite_name, args.email)
+        exit(0)
+
     if args.error_message:
-        dir_results = scan_scrapy_error_message(args.log_directory, args.date, args.db_name, args.error_message)
+        dir_results = scan_scrapy_error_message(args.log_directory, args.date, args.db_name, args.error_message, args.user_name, args.flavor)
     else:
         if args.log_directory:
-            dir_results = scan_scrapy_directories(args.log_directory, args.days, args.db_name, args.user_name)
+            dir_results = scan_scrapy_directories(args.log_directory, args.days, args.db_name, args.user_name, args.suite_name, args.branch_name, args.flavor, _verbose)
 
     statistics = get_statistics(args.db_name, args.error_message)
     email_body = ""
@@ -165,8 +264,8 @@ if __name__ == "__main__":
         output_image = f"{path}/{args.error_message}_failure_statistics.png"
         generate_error_message_line_plot(statistics, output_image)
         email_body = f"Attached is the failure statistics report for the error message: {args.error_message}"
-        send_email(args.email, subject, email_body, output_image)
-        cleanup(args.keep_db, args.db_name)
+        prepare_email_message(subject, email_body, args.email, output_image)
+        cleanup(args.keep_db, args.db_name, f"{args.error_message}_failure_statistics.png")
         exit(0)
 
     output_image = f"{path}/failure_statistics.png"
@@ -176,6 +275,6 @@ if __name__ == "__main__":
         email_body += f"   {result}\n"
     email_body += generate_bar_graph(statistics, output_image)
 
-    send_email(args.email, subject, email_body, output_image)
-    cleanup(args.keep_db, args.db_name)
+    prepare_email_message(subject, email_body, args.email, output_image)
+    cleanup(args.keep_db, args.db_name, 'failure_statistics.png')
     exit(0)
