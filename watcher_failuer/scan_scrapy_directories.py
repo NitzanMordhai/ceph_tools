@@ -13,7 +13,7 @@ def main(log_directory, days_to_scan, db_name, user_name, suite_name, branch_nam
     #adding year to the pattern
     year = datetime.datetime.now().year
 
-    pattern = os.path.join(log_directory, f'{user_name}-*-{suite_name}-{branch_name}-distro-{flavor}-smithi')
+    pattern = os.path.join(log_directory, f'{user_name}-2025-*-{suite_name}-{branch_name}-distro-{flavor}-smithi')
     regex_pattern = fr'{user_name}-(\d{{4}}-\d{{2}}-\d{{2}})_(\d{{2}}:\d{{2}}:\d{{2}})-{suite_name}-{branch_name}-distro-{flavor}-smithi'
 
     directories = glob.glob(pattern)
@@ -21,6 +21,7 @@ def main(log_directory, days_to_scan, db_name, user_name, suite_name, branch_nam
     dir_results = []
     for dir_path in directories:
         print_msg(f"Processing {dir_path}", verbose)
+        print(f"Scanning {dir_path} for {db_name} dir path {dir_path} verbose {verbose}")
         parts = os.path.basename(dir_path).split('-')
         dir_date_str = parts[1] + '-' + parts[2] + '-' + parts[3].split('_')[0]
         dir_time_str = parts[3].split('_')[1]
@@ -67,7 +68,7 @@ if __name__ == "__main__":
     parser.add_argument('--branch_name', help='The branch name in directories to scan', default='wip-yuri*-testing-*-main')
     parser.add_argument('--db_name', type=str, help='Name of the database', required=True)
     parser.add_argument('--flavor', type=str, help='The flavor in directories to scan', default='default')
-    parser.add_argument('--verbose', help='Print verbose output', action='store_true')
+    parser.add_argument('--verbose', type=bool, help='Print verbose output', default=False)
     args = parser.parse_args()
 
-    main(args.log_directory, args.days, args.db_name, args.user_name, args.suite_name, args.branch_name, args.flavor)
+    main(args.log_directory, args.days, args.db_name, args.user_name, args.suite_name, args.branch_name, args.flavor, args.verbose)

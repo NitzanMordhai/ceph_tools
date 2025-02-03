@@ -12,6 +12,13 @@ date_pattern = re.compile(r'\d{4}-\d{2}-\d{2}_\d{2}:\d{2}:\d{2}')
 def convert_reason(long_reason):
     return reason_conversion.get(long_reason, long_reason)
 
+def normalize_machine_name(log_string):
+    # Replace 'smithiXXX' with 'smithi000'
+    normalized_string = re.sub(r'smithi\d+', 'smithi000', log_string)
+    # Replace 'CEPH_REF=xxxxxx' with 'CEPH_REF=XXXXXXXXXXXXXXXXXX'
+    normalized_string = re.sub(r'CEPH_REF=[a-f0-9]+', 'CEPH_REF=XXXXXXXXXXXXXXXXXX', normalized_string)
+    return normalized_string
+
 def parse_log_file(file_path):
     failure_pattern = re.compile(r'Failure: (.+)')
     dead_pattern = re.compile(r'Dead: (.+)')
@@ -20,9 +27,17 @@ def parse_log_file(file_path):
     current_failure = None
     with open(file_path, 'r') as file:
         for line in file:
+            # check if MAX_BACKTRACE_LINES is in the line - that means we have a backtrace 
+            # and we should put it in high importance
+            if "MAX_BACKTRACE_LINES" in line:
+                current_failure = "ONE OF THE TESTS HAVE A BACKTRACE"
+                failures[current_failure]["job_ids"].append("unknown")
+                failures[current_failure]["count"] += 100 # high importance
+
             failure_match = failure_pattern.search(line)
             if failure_match:
-                long_reason = failure_match.group(1)
+                print(f"    Found failure {failure_match.group(1)}")
+                long_reason = normalize_machine_name(failure_match.group(1))
                 short_reason = convert_reason(long_reason)
                 current_failure = short_reason
             else:
@@ -43,6 +58,22 @@ def parse_log_file(file_path):
                             else:
                                 extracted_date = "unknown"
                             failures[current_failure]["date"] = extracted_date
+                    else:
+                        # we may have too many jobs, in that case we will have something like: "171 jobs" without job ids
+                        too_many_jobs = re.search(r'\d+ jobs', line)
+                        if too_many_jobs and current_failure:
+                            print(f"    Found too many jobs: {too_many_jobs.group(0)}")
+                            #loop and insert the db
+                            for i in range(int(too_many_jobs.group(0).split()[0])):
+                                failures[current_failure]["job_ids"].append("unknown")
+                                failures[current_failure]["count"] += 1
+                                match = date_pattern.search(file_path)
+                                if match:
+                                    extracted_date = match.group(0).split('_')[0]
+                                else:
+                                    extracted_date = "unknown"
+                                failures[current_failure]["date"] = extracted_date
+                                print(f"    Found too many jobs: {too_many_jobs.group(0)}")
 
     return failures
 
@@ -85,7 +116,6 @@ def store_failures_in_db(db_name, failures):
             conn.close()
 
 def _get_statistics(db_name):
-    # Check if the database exists
     print(f"Fetching statistics from the database {db_name}")
     statistics = {}
     rows = []
@@ -111,7 +141,6 @@ def _get_statistics(db_name):
     
     for row in rows:
         reason, count, job_ids = row
-        print(f"Reason: {reason}, Count: {count}, Job IDs: {job_ids}")
         statistics[reason] = {"count": count, "job_ids": job_ids.split(',')}
             
     return statistics
@@ -162,9 +191,11 @@ def main(db_name, log_directory, json_out, get_statistics, error_message):
         all_failures = defaultdict(lambda: {"count": 0, "directory": "", "job_ids": []})
         for log_file in os.listdir(log_directory):
             if log_file.endswith("scrape.log"):
+                #print(f"inside Scanning {log_file} in {log_directory}")
                 log_file_path = os.path.join(log_directory, log_file)
                 failures = parse_log_file(log_file_path)
                 if error_message is not None:
+                    #print(f"Searching for error message: {error_message}")
                     for reason, data in failures.items():
                         if error_message in reason:
                             all_failures[reason]["count"] += data["count"]
@@ -175,6 +206,7 @@ def main(db_name, log_directory, json_out, get_statistics, error_message):
                         all_failures[reason]["count"] += data["count"]
                         all_failures[reason]["directory"] = log_directory
                         all_failures[reason]["job_ids"].extend(data["job_ids"])
+                        #print(f"Found {data['count']} occurrences of {reason}")
 
         store_failures_in_db(db_name, all_failures)
         return 0

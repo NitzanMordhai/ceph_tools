@@ -31,16 +31,17 @@ def generate_bar_graph(statistics, output_file):
     email_body = "Top 10 Failure Reasons:\n"
 
     counts = [data['count'] for data in statistics.values()]
+
     wrapped_reasons = []
-    #wrapped_reasons = ['\n'.join(textwrap.wrap(reason, width=40)) for reason in reasons]
-    # we won't present the reasons, we will show maps to the reasons
     for i in range(len(reasons)):
         wrapped_reasons.append(i)
         res = tracker.search_and_refine(reasons[i])
         if len(res) != 0:
-            print(f"Reason: {res} was {reasons[i]}")
-            reasons[i] = res.get('link')
+            reasons[i] = res.get('link') + " " + reasons[i]
+
         email_body += f"{i+1}: {reasons[i]}: {counts[i]} occurrences\n"
+
+    tracker.save_cache()
     plt.figure(figsize=(15, 15))
     bars = plt.barh(wrapped_reasons, counts, color='skyblue')
     plt.xlabel('Number of Occurrences')
@@ -111,6 +112,7 @@ def prepare_email_message(subject, body, to_email, attachment_path):
     msg = EmailMessage()
     msg['Subject'] = subject
     msg['From'] = 'watcher@teuthology.com'
+    print(f"Sending email to: {to_email}")
     msg['To'] = to_email
     msg.set_content(body)
 
@@ -124,6 +126,7 @@ def prepare_email_message(subject, body, to_email, attachment_path):
 
 def cleanup(keep_db, db_name, image):
     # ignore the error if the file does not exist
+    print(f"Cleaning up: {path}/{db_name} and {path}/{image}")
     try:
         os.remove(f'{path}/{db_name}')
     except FileNotFoundError:
@@ -135,7 +138,7 @@ def cleanup(keep_db, db_name, image):
         pass
 
 def get_all_versions(log_directory, days, db_name, user_name, branch_name, suite_name, to_email):
-    versions = ['octopus', 'pacific', 'quincy', 'squid', 'main']
+    versions = ['octopus', 'pacific', 'quincy', 'squid', 'main', 'reef']
     flavors = ['default', 'crimson']
     email_body = ""
     scan_report_start_date = datetime.date.today() - datetime.timedelta(days=days)
@@ -143,6 +146,7 @@ def get_all_versions(log_directory, days, db_name, user_name, branch_name, suite
     subject = f"Failure Statistics Report for {scan_report_start_date} to {scan_report_end_date}"
     # create email body with html format and each version has its own section
     for version in versions:
+        print(f"**************************Processing version: {version}************************")
         if branch_name != '':
             _branch_name = f'{branch_name}-{version}'
         else:
@@ -158,13 +162,16 @@ def get_all_versions(log_directory, days, db_name, user_name, branch_name, suite
                 email_body += f"   {result}\n"
             email_body += generate_bar_graph(statistics, f"{path}/{version}_{flavor}_failure_statistics.png")
             email_body += "\n\n"
+    print(f"     Email body: {email_body}")
     prepare_email_message_versions(subject, email_body, to_email, path)
     for version in versions:
-        cleanup(False, db_name_v, f'{version}_failure_statistics.png')
+        for flavor in flavors:
+            cleanup(False, f'failures.db_{version}_{flavor}', f'{version}_{flavor}_failure_statistics.png')
 
 def get_all_bot_results(log_directory, days, db_name, user_name, branch_name, suite_name, flavor, to_email):
     users = ['yuriw', 'teuthology']
     for user in users:
+        print(f"-------------------Processing user: {user}------------------------")
         if user == 'yuriw':
             branch_name = 'wip-yuri*-testing-*'
         elif user == 'teuthology':
@@ -176,9 +183,15 @@ def get_all_bot_results(log_directory, days, db_name, user_name, branch_name, su
         get_all_versions(log_directory, days, db_name, user, branch_name, suite_name, to_email)
 
 def prepare_email_message_versions(subject, body, to_email, attachment_path):
+    
     msg = EmailMessage()
     msg['Subject'] = subject
     msg['From'] = 'watcher@teuthology.com'
+    if isinstance(to_email, str):
+        to_email = to_email.replace(" ", ",")
+    elif isinstance(to_email, list):
+        # Join list into a comma-separated string
+        to_email = ", ".join(to_email)
     msg['To'] = to_email
     msg.set_content(body)
     
@@ -194,6 +207,7 @@ def prepare_email_message_versions(subject, body, to_email, attachment_path):
     send_email(msg)
         
 def send_email(email_msg):
+    print(f"Sending email to: {email_msg['To']}")
     smtp_server = 'localhost'
     smtp_port = 25
     try:
@@ -220,6 +234,7 @@ if __name__ == "__main__":
     parser.add_argument('--bot', help='Run as a bot results', action='store_true')
     parser.add_argument('--verbose', help='Print verbose output', action='store_true')
     args = parser.parse_args()
+
     _verbose = args.verbose
     if args.bot:
         print("Processing bot results")
@@ -227,6 +242,7 @@ if __name__ == "__main__":
         exit(0)
 
     if args.all_versions:
+        print("Processing all versions - sending email to: ", args.email)
         get_all_versions(args.log_directory, args.days, args.db_name, args.user_name, args.branch_name, args.suite_name, args.email)
         exit(0)
 
@@ -234,7 +250,7 @@ if __name__ == "__main__":
         dir_results = scan_scrapy_error_message(args.log_directory, args.date, args.db_name, args.error_message, args.user_name, args.flavor)
     else:
         if args.log_directory:
-            dir_results = scan_scrapy_directories(args.log_directory, args.days, args.db_name, args.user_name, args.suite_name, args.branch_name, args.flavor)
+            dir_results = scan_scrapy_directories(args.log_directory, args.days, args.db_name, args.user_name, args.suite_name, args.branch_name, args.flavor, _verbose)
 
     statistics = get_statistics(args.db_name, args.error_message)
     email_body = ""
