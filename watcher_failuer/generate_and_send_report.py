@@ -147,13 +147,10 @@ def get_all_versions(log_directory, days, db_name, user_name, branch_name, suite
     # create email body with html format and each version has its own section
     for version in versions:
         print(f"**************************Processing version: {version}************************")
-        if branch_name != '':
-            _branch_name = f'{branch_name}-{version}'
-        else:
-            _branch_name = f'{version}'
         for flavor in flavors:
             db_name_v = f'{db_name}_{version}_{flavor}'
-            dir_results = scan_scrapy_directories(log_directory, days, db_name_v, user_name, suite_name, _branch_name, flavor, _verbose)
+            print(f"Processing flavor: {flavor} branch: {version}")
+            dir_results = scan_scrapy_directories(log_directory, days, db_name_v, user_name, suite_name, version, flavor, _verbose)
             statistics = get_statistics(db_name_v, None)
             if statistics == {}: # skip if no data
                 continue
@@ -169,17 +166,9 @@ def get_all_versions(log_directory, days, db_name, user_name, branch_name, suite
             cleanup(False, f'failures.db_{version}_{flavor}', f'{version}_{flavor}_failure_statistics.png')
 
 def get_all_bot_results(log_directory, days, db_name, user_name, branch_name, suite_name, flavor, to_email):
-    users = ['yuriw', 'teuthology']
+    users = ['*', 'teuthology']
     for user in users:
         print(f"-------------------Processing user: {user}------------------------")
-        if user == 'yuriw':
-            branch_name = 'wip-yuri*-testing-*'
-        elif user == 'teuthology':
-            branch_name = ''
-        else:
-            print("Unknown user")
-            exit(1)
-        print(f"Processing user: {user}")
         get_all_versions(log_directory, days, db_name, user, branch_name, suite_name, to_email)
 
 def prepare_email_message_versions(subject, body, to_email, attachment_path):
@@ -226,7 +215,7 @@ if __name__ == "__main__":
     parser.add_argument('--all_versions', help='Process all versions (ignoring branch name and using yuri test pattern)', default=False)
     parser.add_argument('--user_name', help='The user name in directories to scan', default='yuriw')
     parser.add_argument('--suite_name', help='The suite name in directories to scan', default='rados')
-    parser.add_argument('--branch_name', help='The branch name in directories to scan', default='wip-yuri*-testing-*')
+    parser.add_argument('--branch_name', help='The branch name in directories to scan', default='main')
     parser.add_argument('--flavor', type=str, help='The flavor in directories to scan', default='default')
     parser.add_argument('--days', type=int, help='Number of days to scan back', default=7)
     parser.add_argument('--error_message', help='only find that error message and send the report about that error message by dates', default=None)

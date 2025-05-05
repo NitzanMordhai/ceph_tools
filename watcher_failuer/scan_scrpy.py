@@ -36,7 +36,7 @@ def parse_log_file(file_path):
 
             failure_match = failure_pattern.search(line)
             if failure_match:
-                print(f"    Found failure {failure_match.group(1)}")
+                print_msg(f"    Found failure {failure_match.group(1)}")
                 long_reason = normalize_machine_name(failure_match.group(1))
                 short_reason = convert_reason(long_reason)
                 current_failure = short_reason
@@ -62,7 +62,7 @@ def parse_log_file(file_path):
                         # we may have too many jobs, in that case we will have something like: "171 jobs" without job ids
                         too_many_jobs = re.search(r'\d+ jobs', line)
                         if too_many_jobs and current_failure:
-                            print(f"    Found too many jobs: {too_many_jobs.group(0)}")
+                            print_msg(f"    Found too many jobs: {too_many_jobs.group(0)}")
                             #loop and insert the db
                             for i in range(int(too_many_jobs.group(0).split()[0])):
                                 failures[current_failure]["job_ids"].append("unknown")
@@ -73,12 +73,12 @@ def parse_log_file(file_path):
                                 else:
                                     extracted_date = "unknown"
                                 failures[current_failure]["date"] = extracted_date
-                                print(f"    Found too many jobs: {too_many_jobs.group(0)}")
+                                print_msg(f"    Found too many jobs: {too_many_jobs.group(0)}")
 
     return failures
 
 def store_failures_in_db(db_name, failures):
-    print(f"Storing {len(failures)} failures in the database {db_name}")
+    print_msg(f"Storing {len(failures)} failures in the database {db_name}")
     try:
         path = Path(__file__).parent.absolute()
         conn = sqlite3.connect(f"{path}/{db_name}")
@@ -105,25 +105,25 @@ def store_failures_in_db(db_name, failures):
                     conn.commit()  # Commit after inserting each reason's job_ids
                 
             except sqlite3.Error as e:
-                print(f"Error inserting data for {reason}: {e}")
+                print_msg(f"Error inserting data for {reason}: {e}")
                 conn.rollback()  # Rollback transaction on error
 
     except sqlite3.Error as e:
-        print(f"Error executing SQLite operation: {e}")
+        print_msg(f"Error executing SQLite operation: {e}")
 
     finally:
         if conn:
             conn.close()
 
 def _get_statistics(db_name):
-    print(f"Fetching statistics from the database {db_name}")
+    print_msg(f"Fetching statistics from the database {db_name}")
     statistics = {}
     rows = []
     try:
         path = Path(__file__).parent.absolute()
         db_name = f"{path}/{db_name}"
         if not os.path.exists(db_name):
-            print(f"Error: Database {db_name} does not exist")
+            print_msg(f"Error: Database {db_name} does not exist")
             return {}
         conn = sqlite3.connect(db_name)
         cursor = conn.cursor()
@@ -132,11 +132,11 @@ def _get_statistics(db_name):
         rows = cursor.fetchall()
         conn.close()
     except sqlite3.Error as e:
-        print(f"Error fetching data from the database: {e}")
+        print_msg(f"Error fetching data from the database: {e}")
         conn.close()
         return {}
     except Exception as e:
-        print(f"Error: {e}")
+        print_msg(f"Error: {e}")
         return {}
     
     for row in rows:
@@ -162,13 +162,13 @@ def _get_statistics_by_error_message(db_name, error_message):
     return statistics
 
 def print_statistics(statistics):
-    print("Top 10 Failure Statistics:")
+    print_msg("Top 10 Failure Statistics:")
     for reason, data in statistics.items():
-        print(f"{reason}: {data['count']} occurrences")
-        print("Jobs:")
-        print(", ".join(data['job_ids']))
-        print(", ".join(data['directory']))
-        print("")
+        print_msg(f"{reason}: {data['count']} occurrences")
+        print_msg("Jobs:")
+        print_msg(", ".join(data['job_ids']))
+        print_msg(", ".join(data['directory']))
+        print_msg("")
 
 def main(db_name, log_directory, json_out, get_statistics, error_message):
     log_directory = f"{log_directory}"
@@ -185,17 +185,17 @@ def main(db_name, log_directory, json_out, get_statistics, error_message):
             return statistics
     else:
         if not log_directory:
-            print("Error: --log_directory is required when not using --get_statistics")
+            print_msg("Error: --log_directory is required when not using --get_statistics")
             return 1
 
         all_failures = defaultdict(lambda: {"count": 0, "directory": "", "job_ids": []})
         for log_file in os.listdir(log_directory):
             if log_file.endswith("scrape.log"):
-                #print(f"inside Scanning {log_file} in {log_directory}")
+                #print_msg(f"inside Scanning {log_file} in {log_directory}")
                 log_file_path = os.path.join(log_directory, log_file)
                 failures = parse_log_file(log_file_path)
                 if error_message is not None:
-                    #print(f"Searching for error message: {error_message}")
+                    #print_msg(f"Searching for error message: {error_message}")
                     for reason, data in failures.items():
                         if error_message in reason:
                             all_failures[reason]["count"] += data["count"]
@@ -206,10 +206,14 @@ def main(db_name, log_directory, json_out, get_statistics, error_message):
                         all_failures[reason]["count"] += data["count"]
                         all_failures[reason]["directory"] = log_directory
                         all_failures[reason]["job_ids"].extend(data["job_ids"])
-                        #print(f"Found {data['count']} occurrences of {reason}")
+                        #print_msg(f"Found {data['count']} occurrences of {reason}")
 
         store_failures_in_db(db_name, all_failures)
         return 0
+
+def print_msg(msg, verbose=False):
+    if verbose:
+        print(f'{timestamp()} {msg}')
 
 if __name__ == "__main__":
     import argparse

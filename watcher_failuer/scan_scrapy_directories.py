@@ -12,16 +12,50 @@ def main(log_directory, days_to_scan, db_name, user_name, suite_name, branch_nam
     start_date = today - datetime.timedelta(days=days_to_scan)
     #adding year to the pattern
     year = datetime.datetime.now().year
-
-    pattern = os.path.join(log_directory, f'{user_name}-2025-*-{suite_name}-{branch_name}-distro-{flavor}-smithi')
-    regex_pattern = fr'{user_name}-(\d{{4}}-\d{{2}}-\d{{2}})_(\d{{2}}:\d{{2}}:\d{{2}})-{suite_name}-{branch_name}-distro-{flavor}-smithi'
-
+    if branch_name == 'main' and flavor == 'default':
+        # For main/default, there's an extra wildcard segment (e.g., "wip-…-testing-…")
+        pattern = os.path.join(log_directory, f'{user_name}-2025-*-{suite_name}-*-distro-{flavor}-smithi')
+        regex_str = (
+            r"^/a/[^-]+-"                               # username
+            r"2025-[0-9]{2}-[0-9]{2}_[0-9]{2}:[0-9]{2}:[0-9]{2}-"  # timestamp
+            r"(?:rados|crimson)-"                        # either 'rados' or 'crimson'
+            r"wip-[^-]+-testing-"                        # fixed part for main/default
+            r"2025-[0-9]{2}-[0-9]{2}-[0-9]{4}-"           # build timestamp segment
+            r"distro-" + re.escape(flavor) + r"-smithi$"   # distro segment
+        )
+    elif branch_name == 'main' and flavor == 'crimson':
+        # For main/crimson, the directory naming is different:
+        # It places the flavor (crimson) immediately after the timestamp.
+        pattern = os.path.join(log_directory, f'{user_name}-2025-*-{flavor}-{suite_name}-{branch_name}-distro-{flavor}-smithi')
+        regex_str = (
+            r"^/a/[^-]+-"                              # username
+            r"2025-[0-9]{2}-[0-9]{2}_[0-9]{2}:[0-9]{2}:[0-9]{2}-"  # timestamp
+            + re.escape(flavor) + r"-"                   # literal flavor (crimson) right after timestamp
+            + re.escape(suite_name) + r"-"               # suite name (rados)
+            + re.escape(branch_name) + r"-"              # branch name (main)
+            r"distro-" + re.escape(flavor) + r"-smithi$"  # distro segment with flavor
+        )
+    else:
+        # For any branch that is not "main" (like squid, reef, quincy),
+        # the directory naming is simpler: it goes directly
+        # from the timestamp to the suite, then the branch, then distro.
+        pattern = os.path.join(log_directory, f'{user_name}-{year}-*-{suite_name}-{branch_name}-distro-{flavor}-smithi')
+        regex_str = (
+            r"^/a/[^-]+-"                                  # username
+            r"2025-[0-9]{2}-[0-9]{2}_[0-9]{2}:[0-9]{2}:[0-9]{2}-"  # timestamp
+            r"(?:rados|crimson)-"                           # suite name
+            + re.escape(branch_name) + r"-"                 # branch name directly after suite name
+            r"distro-" + re.escape(flavor) + r"-smithi$"      # distro segment
+        )
     directories = glob.glob(pattern)
-    print(f"Found {len(directories)} directories matching the pattern: {pattern}")
+    print(f"pattern: {pattern}")
+    print(f"regex_str: {regex_str}")
+    regex = re.compile(regex_str)
+    filtered_dirs = [d for d in directories if regex.search(d)]
+
     dir_results = []
-    for dir_path in directories:
-        print_msg(f"Processing {dir_path}", verbose)
-        print(f"Scanning {dir_path} for {db_name} dir path {dir_path} verbose {verbose}")
+    for dir_path in filtered_dirs:
+        print(f"Processing {dir_path}", verbose)
         parts = os.path.basename(dir_path).split('-')
         dir_date_str = parts[1] + '-' + parts[2] + '-' + parts[3].split('_')[0]
         dir_time_str = parts[3].split('_')[1]
