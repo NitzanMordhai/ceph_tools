@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ceph_tools"
+version = "0.1.0"
+description = "CLI tools for generating Ceph failure statistics reports"
+authors = [
+  { name = "Nitzan Mordechai" }
+]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+  "matplotlib>=3.0",
+]
+
+[project.scripts]
+watcher-failure = "watcher_failure.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["watcher_failure*"]
