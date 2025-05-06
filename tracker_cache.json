@@ -1,0 +1,27 @@
+{
+  "\"2025-05-18T23:34:37.133870+0000 mon.smithi000 (mon.0) 163 : cluster [WRN] Health check failed: Failed to place 1 daemon(s) (CEPHADM_DAEMON_PLACE_FAIL)\" in cluster log": {
+    "issue_id": 65494,
+    "link": "https://tracker.ceph.com/issues/65494"
+  },
+  "[':stderr:   Running command git clone --filter=blob:none -q https://github.com/sebastian-philipp/registries-conf-ctl /tmp/pip-req-build-syo4w9gu', 'Cloning https://github.com/sebastian-philipp/registries-conf-ctl to ./pip-req-build-syo4w9gu', 'ERROR: Command errored out with exit status 128: git clone --filter=blob:none -q https://github.com/sebastian-philipp/registries-conf-ctl /tmp/pip-req-build-syo4w9gu Check the logs for full command output.', 'WARNING: Discarding git+https://github.com/sebastian-philipp/registries-conf-ctl. Command errored out with exit status 128: git clone --filter=blob:none -q https://github.com/sebastian-philipp/registries-conf-ctl /tmp/pip-req-build-syo4w9gu Check the logs for full command output.', \"You can inspect what was checked out with 'git status'\", \"and retry with 'git restore --source=HEAD :/'\", 'fatal: could not fetch de1d5d9cff8ff400110e9bc0d2bd55c3a01bf62f from promisor remote', \"fatal: unable to access 'https://github.com/sebastian-philipp/registries-conf-ctl/': OpenSSL SSL_connect: Connection reset by peer in connection to github.com:443\", 'stdout: Collecting git+https://github.com/sebastian-philipp/registries-conf-ctl', 'warning: Clone succeeded, but checkout failed.']": {},
+  "[':stderr:   Running command git clone --filter=blob:none --quiet https://github.com/sebastian-philipp/registries-conf-ctl /tmp/pip-req-build-jp__b656', 'Cloning https://github.com/sebastian-philipp/registries-conf-ctl to ./pip-req-build-jp__b656', 'See above for output.', 'error: subprocess-exited-with-error', 'exit code: 128', \"fatal: unable to access 'https://github.com/sebastian-philipp/registries-conf-ctl/': gnutls_handshake() failed: Error in the pull function.\", 'git clone --filter=blob:none --quiet https://github.com/sebastian-philipp/registries-conf-ctl /tmp/pip-req-build-jp__b656 did not run successfully.', 'note: This error originates from a subprocess, and is likely not a problem with pip.', 'stdout: Collecting git+https://github.com/sebastian-philipp/registries-conf-ctl']": {},
+  "Command failed (workunit test cephadm/test_cephadm.sh) on smithi000 with status 1: 'mkdir -p -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && cd -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && CEPH_CLI_TEST_DUP_COMMAND=1 CEPH_REF=XXXXXXXXXXXXXXXXXX TESTDIR=\"/home/ubuntu/cephtest\" CEPH_ARGS=\"--cluster ceph\" CEPH_ID=\"0\" PATH=$PATH:/usr/sbin CEPH_BASE=/home/ubuntu/cephtest/clone.client.0 CEPH_ROOT=/home/ubuntu/cephtest/clone.client.0 CEPH_MNT=/home/ubuntu/cephtest/mnt.0 adjust-ulimits ceph-coverage /home/ubuntu/cephtest/archive/coverage timeout 3h /home/ubuntu/cephtest/clone.client.0/qa/workunits/cephadm/test_cephadm.sh'": {
+    "issue_id": 56419,
+    "link": "https://tracker.ceph.com/issues/56419"
+  },
+  "Test failure: test_list_enabled_module (tasks.mgr.dashboard.test_mgr_module.MgrModuleTest)": {},
+  "Command failed on smithi000 with status 1: 'yes | sudo mkfs.xfs -f -i size=2048 /dev/vg_nvme/lv_2'": {},
+  "Command failed on smithi000 with status 128: 'rm -rf /home/ubuntu/cephtest/clone.client.0 && git clone https://git.ceph.com/ceph.git /home/ubuntu/cephtest/clone.client.0 && cd /home/ubuntu/cephtest/clone.client.0 && git checkout 77a7c83d186a6493ce78c3c4d20b985942dee0fe'": {},
+  "Command failed (workunit test osd/repeer-on-acting-back.sh) on smithi000 with status 1: 'mkdir -p -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && cd -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && CEPH_CLI_TEST_DUP_COMMAND=1 CEPH_REF=XXXXXXXXXXXXXXXXXX TESTDIR=\"/home/ubuntu/cephtest\" CEPH_ARGS=\"--cluster ceph\" CEPH_ID=\"0\" PATH=$PATH:/usr/sbin CEPH_BASE=/home/ubuntu/cephtest/clone.client.0 CEPH_ROOT=/home/ubuntu/cephtest/clone.client.0 CEPH_MNT=/home/ubuntu/cephtest/mnt.0 adjust-ulimits ceph-coverage /home/ubuntu/cephtest/archive/coverage timeout 3h /home/ubuntu/cephtest/clone.client.0/qa/standalone/osd/repeer-on-acting-back.sh'": {
+    "issue_id": 71057,
+    "link": "https://tracker.ceph.com/issues/71057"
+  },
+  "\"2025-05-18T23:50:00.000123+0000 mon.a (mon.0) 1759 : cluster [WRN]     pg 3.4 is stuck undersized for 61s, current state active+recovering+undersized+remapped, last acting [1,2]\" in cluster log": {
+    "issue_id": 54966,
+    "link": "https://tracker.ceph.com/issues/54966"
+  },
+  "\"2025-05-18T23:33:40.185645+0000 osd.6 (osd.6) 3 : cluster [WRN] OSD bench result of 999.270273 IOPS is not within the threshold limit range of 1000.000000 IOPS and 80000.000000 IOPS for osd.6. IOPS capacity is unchanged at 21500.000000 IOPS. The recommendation is to establish the osd's IOPS capacity using other benchmark tools (e.g. Fio) and then override osd_mclock_max_capacity_iops_[hdd|ssd].\" in cluster log": {
+    "issue_id": 71168,
+    "link": "https://tracker.ceph.com/issues/71168"
+  }
+}
