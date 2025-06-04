@@ -193,7 +193,7 @@ class FailureScanner:
                     "*" if flavor == 'crimson' 
                     else self.cfg.bot_users
                 )
-                logger.debug("Tree scan for version=%s flavor=%s suite_name=%s", version, flavor, suite_name)
+                logger.debug("Tree scan for version=%s flavor=%s suite_name=%s users=%s", version, flavor, suite_name, bot_users)
                 dirs = scan_scrapy_directories(
                     log_directory=str(self.base),
                     days=self.cfg.days,

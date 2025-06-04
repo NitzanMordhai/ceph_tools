@@ -48,10 +48,13 @@ class Runner:
         self.storage.save(records)
         stats_by_vf: Dict[str, Dict[str, Dict[str,int]]] = {}
         if self.cfg.bot:
+            log.debug("Running in tree mode")
             # tree mode: stats per real version/flavor
             for version, flavor_map in scanned_dirs.items():
                 stats_by_vf[version] = {}
+                log.debug("Processing version: %s", version)
                 for flavor in flavor_map:
+                    log.debug("Processing flavor: %s", flavor)
                     stats_by_vf[version][flavor] = self.storage.fetch_statistics(
                         version=version,
                         flavor=flavor,
@@ -59,6 +62,7 @@ class Runner:
                         error_msg=self.cfg.error_message,
                         top_n=10,
                     )
+                    log.debug("Stats by version/flavor: %s", stats_by_vf[version][flavor])
         else:
             stats = self.storage.fetch_statistics(top_n=10)
             stats_by_vf[key] = {self.cfg.flavor: stats}

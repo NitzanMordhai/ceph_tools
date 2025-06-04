@@ -95,7 +95,8 @@ class ReportBuilder:
                     dirs = scanned_dirs.get(version, {}).get(flavor, [])
                     log.debug("Directories for %s/%s: %s", version, flavor, dirs)
                     failures = stats_by_vf.get(version, {}).get(flavor, {})
-
+                    log.debug("Failures for %s/%s: %s", version, flavor, failures)
+                    log.debug("stats_by_vf: %s", stats_by_vf)
                     if not dirs and not failures:
                         continue      # skip this flavor entirely
 

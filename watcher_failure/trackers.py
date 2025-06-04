@@ -54,7 +54,7 @@ class RedmineConnector:
         self.redmine = Redmine(
             red_cfg.get("url", "https://tracker.ceph.com"),
             username=red_cfg.get("username", ""),
-            password=red_cfg.get("password", ""),
+            key=red_cfg.get("password", ""),
         )
 
         project_name = red_cfg.get("project_name", "Ceph")

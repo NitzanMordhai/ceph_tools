@@ -36,11 +36,10 @@ class Config:
         self.verbose = verbose
 
         # supported versions and flavors
-        #self.versions = ['quincy', 'squid', 'main', 'reef', 'tentacle']
-        self.versions = ['main']
+        self.versions = ['quincy', 'squid', 'main', 'reef', 'tentacle']
         self.flavors = ['default']
         #self.flavors  = ['default', 'crimson']
-        self.bot_users = ['teuthology', 'bharath', 'yuriw','skanta']
+        self.bot_users = ['bharath', 'teuthology', 'yuriw','skanta']
 
         self.redmine_config_path  = os.environ.get('REDMINE_CONFIG', '~/.redmin')
         cache_file = 'tracker_cache.json'

@@ -3,6 +3,9 @@ from typing import Optional, Any
 from pathlib import Path
 from typing import List, Dict
 from .failure_scanner import FailureRecord
+import logging
+
+log = logging.getLogger(__name__)
 
 class FailureStorage:
     """
@@ -72,11 +75,11 @@ class FailureStorage:
         params: List[Any] = []
 
         if version:
-            clauses.append("directory LIKE ?")
-            params.append(f"%-{version}-%")
+            clauses.append("version = ?")
+            params.append(version)
         if flavor:
-            clauses.append("directory LIKE ?")
-            params.append(f"%distro-{flavor}-%")
+            clauses.append("flavor = ?")
+            params.append(flavor)
         if since_days:
             # date stored as 'YYYY-MM-DD', use SQLite date functions
             clauses.append("date >= date('now', ?)")
@@ -87,10 +90,13 @@ class FailureStorage:
 
         where_clause = f"WHERE {' AND '.join(clauses)}" if clauses else ''
         query = (
-            f"SELECT reason, COUNT(*) FROM failures {where_clause} "
+            f"SELECT reason, COUNT(*) FROM failures "
+            f"{'WHERE ' + ' AND '.join(clauses) if clauses else ''} "
             "GROUP BY reason ORDER BY COUNT(*) DESC LIMIT ?"
         )
+        log.debug("----- Executing query: %s", query)
         params.append(top_n)
+        log.debug("----- With parameters: %s", params)
         cur.execute(query, tuple(params))
         rows = cur.fetchall()
         return {reason: count for reason, count in rows}

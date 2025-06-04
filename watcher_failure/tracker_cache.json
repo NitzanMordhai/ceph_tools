@@ -114,5 +114,18 @@
   "Timeout 120 running ceph --cluster ceph osd pool create unique_pool_3 16": {
     "issue_id": 36294,
     "link": "https://tracker.ceph.com/issues/36294"
+  },
+  "b'2025-05-28T09:57:41.033 DEBUG:teuthology.exit:Finished running handlers'": {},
+  "Command failed on smithi000 with status 100: 'sudo DEBIAN_FRONTEND=noninteractive apt-get -y install linux-image-generic'": {},
+  "['E: Failed to fetch <package>  Connection failed ', 'Unable to connect to archive.ubuntu.com:http:', 'connection timed out']": {},
+  "b'2025-05-29T12:14:45.299 DEBUG:teuthology.exit:Finished running handlers'": {},
+  "\"2025-05-28T10:53:46.879406+0000 osd.8 (osd.8) 3 : cluster [WRN] OSD bench result of 985.827521 IOPS is not within the threshold limit range of 1000.000000 IOPS and 80000.000000 IOPS for osd.8. IOPS capacity is unchanged at 21500.000000 IOPS. The recommendation is to establish the osd's IOPS capacity using other benchmark tools (e.g. Fio) and then override osd_mclock_max_capacity_iops_[hdd|ssd].\" in cluster log": {
+    "issue_id": 64852,
+    "link": "https://tracker.ceph.com/issues/64852"
+  },
+  "Test failure: test_selftest_command_spam (tasks.mgr.test_module_selftest.TestModuleSelftest)": {},
+  "None": {
+    "issue_id": 70796,
+    "link": "https://tracker.ceph.com/issues/70796"
   }
 }
