@@ -1,0 +1,118 @@
+{
+  "\"2025-05-18T23:34:37.133870+0000 mon.smithi000 (mon.0) 163 : cluster [WRN] Health check failed: Failed to place 1 daemon(s) (CEPHADM_DAEMON_PLACE_FAIL)\" in cluster log": {
+    "issue_id": 70714,
+    "link": "https://tracker.ceph.com/issues/70714"
+  },
+  "[':stderr:   Running command git clone --filter=blob:none -q https://github.com/sebastian-philipp/registries-conf-ctl /tmp/pip-req-build-syo4w9gu', 'Cloning https://github.com/sebastian-philipp/registries-conf-ctl to ./pip-req-build-syo4w9gu', 'ERROR: Command errored out with exit status 128: git clone --filter=blob:none -q https://github.com/sebastian-philipp/registries-conf-ctl /tmp/pip-req-build-syo4w9gu Check the logs for full command output.', 'WARNING: Discarding git+https://github.com/sebastian-philipp/registries-conf-ctl. Command errored out with exit status 128: git clone --filter=blob:none -q https://github.com/sebastian-philipp/registries-conf-ctl /tmp/pip-req-build-syo4w9gu Check the logs for full command output.', \"You can inspect what was checked out with 'git status'\", \"and retry with 'git restore --source=HEAD :/'\", 'fatal: could not fetch de1d5d9cff8ff400110e9bc0d2bd55c3a01bf62f from promisor remote', \"fatal: unable to access 'https://github.com/sebastian-philipp/registries-conf-ctl/': OpenSSL SSL_connect: Connection reset by peer in connection to github.com:443\", 'stdout: Collecting git+https://github.com/sebastian-philipp/registries-conf-ctl', 'warning: Clone succeeded, but checkout failed.']": {},
+  "[':stderr:   Running command git clone --filter=blob:none --quiet https://github.com/sebastian-philipp/registries-conf-ctl /tmp/pip-req-build-jp__b656', 'Cloning https://github.com/sebastian-philipp/registries-conf-ctl to ./pip-req-build-jp__b656', 'See above for output.', 'error: subprocess-exited-with-error', 'exit code: 128', \"fatal: unable to access 'https://github.com/sebastian-philipp/registries-conf-ctl/': gnutls_handshake() failed: Error in the pull function.\", 'git clone --filter=blob:none --quiet https://github.com/sebastian-philipp/registries-conf-ctl /tmp/pip-req-build-jp__b656 did not run successfully.', 'note: This error originates from a subprocess, and is likely not a problem with pip.', 'stdout: Collecting git+https://github.com/sebastian-philipp/registries-conf-ctl']": {},
+  "Command failed (workunit test cephadm/test_cephadm.sh) on smithi000 with status 1: 'mkdir -p -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && cd -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && CEPH_CLI_TEST_DUP_COMMAND=1 CEPH_REF=XXXXXXXXXXXXXXXXXX TESTDIR=\"/home/ubuntu/cephtest\" CEPH_ARGS=\"--cluster ceph\" CEPH_ID=\"0\" PATH=$PATH:/usr/sbin CEPH_BASE=/home/ubuntu/cephtest/clone.client.0 CEPH_ROOT=/home/ubuntu/cephtest/clone.client.0 CEPH_MNT=/home/ubuntu/cephtest/mnt.0 adjust-ulimits ceph-coverage /home/ubuntu/cephtest/archive/coverage timeout 3h /home/ubuntu/cephtest/clone.client.0/qa/workunits/cephadm/test_cephadm.sh'": {
+    "issue_id": 56419,
+    "link": "https://tracker.ceph.com/issues/56419"
+  },
+  "Test failure: test_list_enabled_module (tasks.mgr.dashboard.test_mgr_module.MgrModuleTest)": {
+    "issue_id": 70669,
+    "link": "https://tracker.ceph.com/issues/70669"
+  },
+  ": 'yes | sudo mkfs.xfs -f -i size=2048 /dev/vg_nvme/lv_2'": {
+    "issue_id": 67860,
+    "link": "https://tracker.ceph.com/issues/67860"
+  },
+  ": 'rm -rf /home/ubuntu/cephtest/clone.client.0 && git clone https://git.ceph.com/ceph.git /home/ubuntu/cephtest/clone.client.0 && cd /home/ubuntu/cephtest/clone.client.0 && git checkout 77a7c83d186a6493ce78c3c4d20b985942dee0fe'": {
+    "issue_id": 44889,
+    "link": "https://tracker.ceph.com/issues/44889"
+  },
+  "Command failed (workunit test osd/repeer-on-acting-back.sh) on smithi000 with status 1: 'mkdir -p -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && cd -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && CEPH_CLI_TEST_DUP_COMMAND=1 CEPH_REF=XXXXXXXXXXXXXXXXXX TESTDIR=\"/home/ubuntu/cephtest\" CEPH_ARGS=\"--cluster ceph\" CEPH_ID=\"0\" PATH=$PATH:/usr/sbin CEPH_BASE=/home/ubuntu/cephtest/clone.client.0 CEPH_ROOT=/home/ubuntu/cephtest/clone.client.0 CEPH_MNT=/home/ubuntu/cephtest/mnt.0 adjust-ulimits ceph-coverage /home/ubuntu/cephtest/archive/coverage timeout 3h /home/ubuntu/cephtest/clone.client.0/qa/standalone/osd/repeer-on-acting-back.sh'": {
+    "issue_id": 71071,
+    "link": "https://tracker.ceph.com/issues/71071"
+  },
+  "\"2025-05-18T23:50:00.000123+0000 mon.a (mon.0) 1759 : cluster [WRN]     pg 3.4 is stuck undersized for 61s, current state active+recovering+undersized+remapped, last acting [1,2]\" in cluster log": {},
+  "\"2025-05-18T23:33:40.185645+0000 osd.6 (osd.6) 3 : cluster [WRN] OSD bench result of 999.270273 IOPS is not within the threshold limit range of 1000.000000 IOPS and 80000.000000 IOPS for osd.6. IOPS capacity is unchanged at 21500.000000 IOPS. The recommendation is to establish the osd's IOPS capacity using other benchmark tools (e.g. Fio) and then override osd_mclock_max_capacity_iops_[hdd|ssd].\" in cluster log": {
+    "issue_id": 71168,
+    "link": "https://tracker.ceph.com/issues/71168"
+  },
+  "Command failed on smithi000 with status 1: 'yes | sudo mkfs.xfs -f -i size=2048 /dev/vg_nvme/lv_2'": {
+    "issue_id": 67860,
+    "link": "https://tracker.ceph.com/issues/67860"
+  },
+  "Command failed on smithi000 with status 128: 'rm -rf /home/ubuntu/cephtest/clone.client.0 && git clone https://git.ceph.com/ceph.git /home/ubuntu/cephtest/clone.client.0 && cd /home/ubuntu/cephtest/clone.client.0 && git checkout 77a7c83d186a6493ce78c3c4d20b985942dee0fe'": {},
+  "Command failed (workunit test rados/test.sh) on smithi000 with status 1: 'mkdir -p -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && cd -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && CEPH_CLI_TEST_DUP_COMMAND=1 CEPH_REF=XXXXXXXXXXXXXXXXXX TESTDIR=\"/home/ubuntu/cephtest\" CEPH_ARGS=\"--cluster ceph\" CEPH_ID=\"0\" PATH=$PATH:/usr/sbin CEPH_BASE=/home/ubuntu/cephtest/clone.client.0 CEPH_ROOT=/home/ubuntu/cephtest/clone.client.0 CEPH_MNT=/home/ubuntu/cephtest/mnt.0 adjust-ulimits ceph-coverage /home/ubuntu/cephtest/archive/coverage timeout 3h /home/ubuntu/cephtest/clone.client.0/qa/workunits/rados/test.sh'": {
+    "issue_id": 40119,
+    "link": "https://tracker.ceph.com/issues/40119"
+  },
+  "Command failed (workunit test cephadm/test_repos.sh) on smithi000 with status 1: 'mkdir -p -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && cd -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && CEPH_CLI_TEST_DUP_COMMAND=1 CEPH_REF=XXXXXXXXXXXXXXXXXX TESTDIR=\"/home/ubuntu/cephtest\" CEPH_ARGS=\"--cluster ceph\" CEPH_ID=\"0\" PATH=$PATH:/usr/sbin CEPH_BASE=/home/ubuntu/cephtest/clone.client.0 CEPH_ROOT=/home/ubuntu/cephtest/clone.client.0 CEPH_MNT=/home/ubuntu/cephtest/mnt.0 timeout 3h /home/ubuntu/cephtest/clone.client.0/qa/workunits/cephadm/test_repos.sh'": {
+    "issue_id": 65719,
+    "link": "https://tracker.ceph.com/issues/65719"
+  },
+  "120 running ceph --cluster ceph osd last-stat-seq osd.12": {
+    "issue_id": 55395,
+    "link": "https://tracker.ceph.com/issues/55395"
+  },
+  "reached maximum tries (500) after waiting for 3000 seconds": {
+    "issue_id": 39148,
+    "link": "https://tracker.ceph.com/issues/39148"
+  },
+  "Command failed on smithi000 with status 8: \"wget -q -O /home/ubuntu/cephtest/admin_socket_client.0/objecter_requests -- 'http://git.ceph.com/?p=ceph-ci.git;a=blob_plain;f=src/test/admin_socket/objecter_requests;hb=main' && chmod u=rx -- /home/ubuntu/cephtest/admin_socket_client.0/objecter_requests\"": {},
+  "120 running ceph --cluster ceph tell osd.1 flush_pg_stats": {
+    "issue_id": 69827,
+    "link": "https://tracker.ceph.com/issues/69827"
+  },
+  "120 running ceph --cluster ceph tell osd.0 flush_pg_stats": {
+    "issue_id": 69827,
+    "link": "https://tracker.ceph.com/issues/69827"
+  },
+  "120 running ceph --cluster ceph osd dump --format=json": {
+    "issue_id": 55395,
+    "link": "https://tracker.ceph.com/issues/55395"
+  },
+  "120 running ceph --cluster ceph tell osd.2 flush_pg_stats": {
+    "issue_id": 69827,
+    "link": "https://tracker.ceph.com/issues/69827"
+  },
+  "b'2025-05-23T10:35:54.749 DEBUG:teuthology.exit:Finished running handlers'": {},
+  "b'2025-05-22T21:10:04.599 DEBUG:teuthology.exit:Finished running handlers'": {},
+  "120 running ceph --cluster ceph tell osd.3 flush_pg_stats": {
+    "issue_id": 69827,
+    "link": "https://tracker.ceph.com/issues/69827"
+  },
+  "3h running clone.client.0/qa/workunits/rbd/crimson/test_crimson_librbd.sh": {},
+  "Timeout 120 running ceph --cluster ceph tell osd.1 flush_pg_stats": {
+    "issue_id": 39087,
+    "link": "https://tracker.ceph.com/issues/39087"
+  },
+  "Timeout 120 running ceph --cluster ceph tell osd.0 flush_pg_stats": {
+    "issue_id": 39087,
+    "link": "https://tracker.ceph.com/issues/39087"
+  },
+  "Timeout 120 running ceph --cluster ceph osd dump --format=json": {
+    "issue_id": 36294,
+    "link": "https://tracker.ceph.com/issues/36294"
+  },
+  "Timeout 120 running ceph --cluster ceph tell osd.2 flush_pg_stats": {
+    "issue_id": 39087,
+    "link": "https://tracker.ceph.com/issues/39087"
+  },
+  "Timeout 120 running ceph --cluster ceph tell osd.3 flush_pg_stats": {
+    "issue_id": 39087,
+    "link": "https://tracker.ceph.com/issues/39087"
+  },
+  "Timeout 3h running clone.client.0/qa/workunits/rbd/crimson/test_crimson_librbd.sh": {},
+  "b'2025-05-26T21:03:43.222 DEBUG:teuthology.exit:Finished running handlers'": {},
+  "No module named 'tasks.ceph'": {
+    "issue_id": 59382,
+    "link": "https://tracker.ceph.com/issues/59382"
+  },
+  "\"2025-05-26T12:12:06.160420+0000 osd.0 (osd.0) 1 : cluster [WRN] slow requests (most affected pool [ 'test-rados-api-smithi000-36588-1' : 1 ])\" in cluster log": {
+    "issue_id": 69034,
+    "link": "https://tracker.ceph.com/issues/69034"
+  },
+  "b'2025-05-26T20:11:17.711 DEBUG:teuthology.exit:Finished running handlers'": {},
+  "Found coredumps on ubuntu@smithi000.front.sepia.ceph.com": {},
+  "timed out waiting for admin_socket to appear after osd.0 restart": {
+    "issue_id": 69913,
+    "link": "https://tracker.ceph.com/issues/69913"
+  },
+  "Timeout 120 running ceph --cluster ceph osd pool create unique_pool_3 16": {
+    "issue_id": 36294,
+    "link": "https://tracker.ceph.com/issues/36294"
+  }
+}
