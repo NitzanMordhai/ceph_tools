@@ -19,7 +19,6 @@ class Runner:
         self.cleaner = Cleaner(cfg)
 
     def run(self) -> None:
-        log.debug("Starting run with config: %s", self.cfg)
         # 1. Setup DB
         self.storage.setup()
         # 2. Scan logs
@@ -36,10 +35,7 @@ class Runner:
             records = recs
             key = Path(self.cfg.log_directory).name
             scanned_dirs = { key: { self.cfg.flavor: dirs } }
-            log.debug("Single directory scan: %s", scanned_dirs)
-            log.debug("key: %s", key)
 
-        
         #log.debug("Scanned directories: %s", scanned_dirs)
         #log.debug("Parsed records: ")
         #for rec in records:
@@ -52,9 +48,7 @@ class Runner:
             # tree mode: stats per real version/flavor
             for version, flavor_map in scanned_dirs.items():
                 stats_by_vf[version] = {}
-                log.debug("Processing version: %s", version)
                 for flavor in flavor_map:
-                    log.debug("Processing flavor: %s", flavor)
                     stats_by_vf[version][flavor] = self.storage.fetch_statistics(
                         version=version,
                         flavor=flavor,
@@ -62,18 +56,21 @@ class Runner:
                         error_msg=self.cfg.error_message,
                         top_n=10,
                     )
-                    log.debug("Stats by version/flavor: %s", stats_by_vf[version][flavor])
+
         else:
             stats = self.storage.fetch_statistics(top_n=10)
             stats_by_vf[key] = {self.cfg.flavor: stats}
 
-        log.debug("Statistics fetched: %s", stats_by_vf)
-        # 4. Build report
         subject, body, images = self.builder.build(stats_by_vf, scanned_dirs, records)
-        log.debug("Report built with subject: %s", subject)
-        # 5. Send
-        self.sender.send(subject, body, images)
-        log.debug("Email sent to: %s", self.cfg.email)
+
+        log.info("********************* Sending report ********************")
+        log.info("Subject: %s", subject)
+        log.info("%s", body)
+        log.info("******************** End of report ********************")
+
+        if self.cfg.email:
+            self.sender.send(subject, body, images)
+
         # 6. Cleanup
         self.cleaner.run()
         log.debug("Cleanup completed")

@@ -81,7 +81,7 @@ class RedmineConnector:
 
         # 0. cheap cache look‑up ------------------------------------------------
         if search_string in self.cache:
-            logger.info("Cache hit for '%s'", search_string)
+            logger.debug("Cache hit for '%s'", search_string)
             return self.cache[search_string]
 
         # 1. normalise ----------------------------------------------------------
@@ -90,7 +90,7 @@ class RedmineConnector:
         # 2. fetch possible issues ---------------------------------------------
         issues = self._fetch_issues(q_norm, status=status, limit=limit)
         if not issues:
-            logger.info("No issues found for '%s'", search_string)
+            logger.debug("No issues found for '%s'", search_string)
             self.cache[search_string] = {}
             self._save_cache()
             return {}
@@ -98,7 +98,7 @@ class RedmineConnector:
         # 3. select the best match ---------------------------------------------
         best = self._find_best_match(q_norm, issues)
         if best is None:
-            logger.info("Could not identify a close enough Redmine issue for '%s'", search_string)
+            logger.debug("Could not identify a close enough Redmine issue for '%s'", search_string)
             self.cache[search_string] = {}
             self._save_cache()
             return {}

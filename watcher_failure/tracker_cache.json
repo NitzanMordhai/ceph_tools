@@ -127,5 +127,29 @@
   "None": {
     "issue_id": 70796,
     "link": "https://tracker.ceph.com/issues/70796"
-  }
+  },
+  "Command failed on smithi000 with status 1: 'yes | sudo mkfs.xfs -f -i size=2048 -f /dev/vg_nvme/lv_2'": {},
+  "reached maximum tries (50) after waiting for 300 seconds": {
+    "issue_id": 39148,
+    "link": "https://tracker.ceph.com/issues/39148"
+  },
+  "Command failed on smithi000 with status 8: \"wget -q -O /home/ubuntu/cephtest/admin_socket_client.0/objecter_requests -- 'http://git.ceph.com/?p=ceph.git;a=blob_plain;f=src/test/admin_socket/objecter_requests;hb=wip-yuri-testing-2025-01-21-0747-squid' && chmod u=rx -- /home/ubuntu/cephtest/admin_socket_client.0/objecter_requests\"": {},
+  "\"2025-01-23T17:27:20.189165+0000 mon.smithi000 (mon.0) 259 : cluster [WRN] Health check failed: Failed to place 1 daemon(s) (CEPHADM_DAEMON_PLACE_FAIL)\" in cluster log": {
+    "issue_id": 21589,
+    "link": "https://tracker.ceph.com/issues/21589"
+  },
+  "\"2025-01-23T17:20:00.000115+0000 mon.a (mon.0) 1263 : cluster [WRN] Health detail: HEALTH_WARN 2 osds down; Low space hindering backfill (add storage if this doesn't resolve itself): 1 pg backfill_toofull; Degraded data redundancy: 6538/19029 objects degraded (34.358%), 6 pgs degraded, 8 pgs undersized\" in cluster log": {},
+  "Timeout 3h running clone.client.0/qa/workunits/cls/test_cls_2pc_queue.sh": {},
+  "Command failed (workunit test scrub/osd-scrub-test.sh) on smithi000 with status 1: 'mkdir -p -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && cd -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && CEPH_CLI_TEST_DUP_COMMAND=1 CEPH_REF=XXXXXXXXXXXXXXXXXX TESTDIR=\"/home/ubuntu/cephtest\" CEPH_ARGS=\"--cluster ceph\" CEPH_ID=\"0\" PATH=$PATH:/usr/sbin CEPH_BASE=/home/ubuntu/cephtest/clone.client.0 CEPH_ROOT=/home/ubuntu/cephtest/clone.client.0 CEPH_MNT=/home/ubuntu/cephtest/mnt.0 adjust-ulimits ceph-coverage /home/ubuntu/cephtest/archive/coverage timeout 3h /home/ubuntu/cephtest/clone.client.0/qa/standalone/scrub/osd-scrub-test.sh'": {
+    "issue_id": 69920,
+    "link": "https://tracker.ceph.com/issues/69920"
+  },
+  "Command failed (workunit test mon/mon-stretch-mode-5-mons-8-osds.sh) on smithi000 with status 22: 'mkdir -p -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && cd -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && CEPH_CLI_TEST_DUP_COMMAND=1 CEPH_REF=XXXXXXXXXXXXXXXXXX TESTDIR=\"/home/ubuntu/cephtest\" CEPH_ARGS=\"--cluster ceph\" CEPH_ID=\"0\" PATH=$PATH:/usr/sbin CEPH_BASE=/home/ubuntu/cephtest/clone.client.0 CEPH_ROOT=/home/ubuntu/cephtest/clone.client.0 CEPH_MNT=/home/ubuntu/cephtest/mnt.0 adjust-ulimits ceph-coverage /home/ubuntu/cephtest/archive/coverage timeout 3h /home/ubuntu/cephtest/clone.client.0/qa/workunits/mon/mon-stretch-mode-5-mons-8-osds.sh'": {},
+  "Command failed (workunit test mon/mon-cluster-log.sh) on smithi000 with status 1: 'mkdir -p -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && cd -- /home/ubuntu/cephtest/mnt.0/client.0/tmp && CEPH_CLI_TEST_DUP_COMMAND=1 CEPH_REF=XXXXXXXXXXXXXXXXXX TESTDIR=\"/home/ubuntu/cephtest\" CEPH_ARGS=\"--cluster ceph\" CEPH_ID=\"0\" PATH=$PATH:/usr/sbin CEPH_BASE=/home/ubuntu/cephtest/clone.client.0 CEPH_ROOT=/home/ubuntu/cephtest/clone.client.0 CEPH_MNT=/home/ubuntu/cephtest/mnt.0 adjust-ulimits ceph-coverage /home/ubuntu/cephtest/archive/coverage timeout 3h /home/ubuntu/cephtest/clone.client.0/qa/standalone/mon/mon-cluster-log.sh'": {},
+  "Command failed on smithi000 with status 1: 'sudo fuser -v /var/lib/dpkg/lock-frontend'": {},
+  "\"2025-06-03T17:37:43.917569+0000 mon.c (mon.2) 432 : cluster [WRN] Health check failed: 1 network partition detected (MON_NETSPLIT)\" in cluster log": {
+    "issue_id": 21589,
+    "link": "https://tracker.ceph.com/issues/21589"
+  },
+  "[':stderr:   Running command git clone --filter=blob:none -q https://github.com/sebastian-philipp/registries-conf-ctl /tmp/pip-req-build-cob8u1ib', 'Cloning https://github.com/sebastian-philipp/registries-conf-ctl to ./pip-req-build-cob8u1ib', 'ERROR: Command errored out with exit status 128: git clone --filter=blob:none -q https://github.com/sebastian-philipp/registries-conf-ctl /tmp/pip-req-build-cob8u1ib Check the logs for full command output.', 'WARNING: Discarding git+https://github.com/sebastian-philipp/registries-conf-ctl. Command errored out with exit status 128: git clone --filter=blob:none -q https://github.com/sebastian-philipp/registries-conf-ctl /tmp/pip-req-build-cob8u1ib Check the logs for full command output.', \"You can inspect what was checked out with 'git status'\", \"and retry with 'git restore --source=HEAD :/'\", 'error: RPC failed; HTTP 500 curl 22 The requested URL returned error: 500', 'fatal: could not fetch de1d5d9cff8ff400110e9bc0d2bd55c3a01bf62f from promisor remote', \"fatal: expected 'packfile'\", 'stdout: Collecting git+https://github.com/sebastian-philipp/registries-conf-ctl', 'warning: Clone succeeded, but checkout failed.']": {}
 }

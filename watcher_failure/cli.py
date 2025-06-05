@@ -9,11 +9,11 @@ def main():
         description="Watcher Failure CLI: scan logs, generate reports, and send email"
     )
     parser.add_argument(
-        "--db_name", required=True,
+        "--db_name", default="failures.db",
         help="SQLite database name (e.g., failures.db)"
     )
     parser.add_argument(
-        "--email", required=True, nargs="+",
+        "--email", nargs="+",
         help="Email address(es) to send reports to (space-separated)"
     )
     parser.add_argument(
