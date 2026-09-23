@@ -1,7 +1,15 @@
 import argparse
+import datetime
 import logging
 from .config import Config
 from .runner import Runner
+
+
+def _iso_date(value: str) -> datetime.date:
+    try:
+        return datetime.date.fromisoformat(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"invalid date {value!r}, expected YYYY-MM-DD") from exc
 
 
 def main():
@@ -22,7 +30,16 @@ def main():
     )
     parser.add_argument(
         "--days", type=int, default=7,
-        help="Number of days to scan back (default: 7)"
+        help="Number of days to scan back from --end-date (or today). Ignored if --start-date is given (default: 7)"
+    )
+    parser.add_argument(
+        "--start-date", type=_iso_date, default=None,
+        help="Start of the date window, YYYY-MM-DD. Overrides --days. If --end-date is omitted, defaults to today."
+    )
+    parser.add_argument(
+        "--end-date", type=_iso_date, default=None,
+        help="End of the date window, YYYY-MM-DD. If omitted, defaults to today. "
+             "Combine with --days for a window that doesn't end today, e.g. --end-date 2026-09-01 --days 7."
     )
     parser.add_argument(
         "--user_name", default="teuthology",
@@ -69,7 +86,10 @@ def main():
     logging.debug("CLI arguments: %s", args)
 
     # build config and run
-    cfg = Config.from_args(args)
+    try:
+        cfg = Config.from_args(args)
+    except ValueError as exc:
+        parser.error(str(exc))
     Runner(cfg).run()
 
 

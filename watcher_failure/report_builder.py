@@ -1,9 +1,19 @@
 from .failure_scanner import FailureRecord
-from datetime import date, timedelta
 from typing import Dict, Any, List, Tuple
 import logging
 
 log = logging.getLogger(__name__)
+
+
+def _format_issue_link(issue: Dict[str, Any]) -> str:
+    """Render a RedmineConnector.search_and_refine() result for the report."""
+    if issue.get("link"):
+        return issue["link"]
+    closed = issue.get("closed_match")
+    if closed:
+        return f"{closed['link']} (closed: {closed.get('status', '?')} — may need re-triage)"
+    return "no tracker match"
+
 
 class ReportBuilder:
     """
@@ -29,8 +39,7 @@ class ReportBuilder:
         """
         Build email subject, body text, and image CID mapping.
         """
-        end_date = date.today()
-        start_date = end_date - timedelta(days=self.cfg.days)
+        start_date, end_date = self.cfg.start_date, self.cfg.end_date
         subject = f"Failure Statistics Report for {start_date} to {end_date}"
         
         # Header lines
@@ -74,7 +83,7 @@ class ReportBuilder:
             if flat:
                 for idx, (reason, cnt) in enumerate(flat.items(), start=1):
                     issue = self.connector.search_and_refine(reason)
-                    link = issue.get("link") or f"Issue {issue.get('issue_id','')}"
+                    link = _format_issue_link(issue)
                     lines.append(f"  {idx}. {reason} ({cnt}) → {link}")
                     ids = job_ids_by_reason.get(reason, [])
                     if ids:
@@ -115,7 +124,7 @@ class ReportBuilder:
                         top10 = sorted(failures.items(), key=lambda x: -x[1])[:10]
                         for i,(reason,count) in enumerate(top10, start=1):
                             issue = self.connector.search_and_refine(reason)
-                            link  = issue.get("link") or f"Issue {issue.get('issue_id','?')}"
+                            link  = _format_issue_link(issue)
                             version_lines.append(f"     {i}. {reason} ({count}) → {link}")
                     else:
                         version_lines.append("   Top failures:")

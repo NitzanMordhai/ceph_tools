@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/nmordch/ceph_tools/**)",
+      "Read(//home/nmordch/**)",
+      "Read(//home/nmordch/.claude/**)",
+      "Bash(cd /home/nmordch/ceph_tools && grep -n \"baseRefName\" build-integration-branch.py)",
+      "Bash(find / -maxdepth 2 -iname \".claude\")",
+      "Bash(find / -maxdepth 6 -iname \"CLAUDE.md\")",
+      "Bash(find / -maxdepth 6 -iname \"CLAUDE.local.md\")",
+      "Bash(find /home/nmordch -maxdepth 6 -iname \"CLAUDE.md\" -o -iname \"CLAUDE.local.md\" 2>/dev/null)",
+      "Bash(kill %1)",
+      "Bash(jobs)",
+      "Bash(grep -n \"fetch_pr_ref\\\\|cherry_pick_pr\\\\|git fetch\\\\|'fetch'\" /home/nmordch/ceph_tools/build-integration-branch.py)",
+      "Bash(python3 -c ' *)",
+      "Bash(echo \"exit code: $?\")",
+      "Read(//tmp/**)",
+      "Bash(echo \"exit: $?\")"
+    ]
+  }
+}

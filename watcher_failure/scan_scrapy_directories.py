@@ -20,9 +20,33 @@ from typing import List, Union
 # make sure you have this somewhere
 DATE_FMT = "%Y-%m-%d"
 
+def list_dir_names(log_directory: str) -> List[str]:
+    """One `os.scandir()` pass over `log_directory`, returning the names of
+    its immediate subdirectories.
+
+    Callers that need to filter the same base directory multiple times
+    (e.g. once per version/flavor combo) should call this once and pass
+    the result to `scan_scrapy_directories(..., dir_names=...)` instead of
+    letting each call re-walk the directory itself — on a large, flat,
+    NFS-mounted archive that directory listing is the expensive part, not
+    the regex filtering.
+    """
+    names: List[str] = []
+    try:
+        for entry in os.scandir(log_directory):
+            if entry.is_dir():
+                names.append(entry.name)
+    except FileNotFoundError:
+        logging.error("Log directory not found: %s", log_directory)
+    except Exception:
+        logging.exception("Error listing directories under %s", log_directory)
+    return names
+
+
 def scan_scrapy_directories(
     log_directory: str,
-    days: int,
+    start_date: datetime.date,
+    end_date: datetime.date,
     user_name: Union[str, List[str]],
     suite_name: str,
     version: str,
@@ -30,6 +54,7 @@ def scan_scrapy_directories(
     flavor: str,
     verbose: bool = False,
     db_name: str = None,
+    dir_names: List[str] = None,
     **kwargs,
 ) -> List[str]:
     """
@@ -39,10 +64,14 @@ def scan_scrapy_directories(
       - a single string,
       - a list of strings, or
       - '*' (or ['*']) to match any user.
-    Only directories whose date is within the past `days` days are returned.
+    Only directories whose date falls within [start_date, end_date] (inclusive) are returned.
+
+    `dir_names`, if given, is used instead of re-scanning `log_directory` —
+    pass the result of `list_dir_names(log_directory)` when filtering the
+    same base directory for several version/flavor combos, to avoid
+    walking it once per combo.
     """
     base = Path(log_directory)
-    cutoff = datetime.date.today() - datetime.timedelta(days=days)
 
     # --- build the “user” part of the regex ---
     if isinstance(user_name, (list, tuple)):
@@ -92,23 +121,21 @@ def scan_scrapy_directories(
 
     results: List[str] = []
     try:
-        for entry in os.scandir(base):
-            if not entry.is_dir():
-                logging.debug("Skipping %s: not a directory", entry.name)
-                continue
-            m = regex.match(entry.name)
+        names = dir_names if dir_names is not None else list_dir_names(base)
+        for name in names:
+            m = regex.match(name)
             if not m:
-                logging.debug("Skipping %s: does not match pattern %s", entry.name, pattern)
-                if entry.name.startswith('skanta-2025-05-22'):
-                    logging.debug("Skipping %s: does not match regex %s", entry.name, pattern)
+                logging.debug("Skipping %s: does not match pattern %s", name, pattern)
+                if name.startswith('skanta-2025-05-22'):
+                    logging.debug("Skipping %s: does not match regex %s", name, pattern)
                 continue
-            logging.debug("Directory %s matched regex", entry.name)
+            logging.debug("Directory %s matched regex", name)
             if version == "main":
-                name_before_distro = entry.name.split("-distro-")[0]
+                name_before_distro = name.split("-distro-")[0]
                 contains_known_version = any(f"-{ver}" in name_before_distro for ver in ["reef", "tentacle", "quincy", "squid"])
                 if contains_known_version:
-                    if verbose and entry.name.startswith('skanta-2025'):
-                            logging.debug("Skipping %s: contains known version (main mode)", entry.name)
+                    if verbose and name.startswith('skanta-2025'):
+                            logging.debug("Skipping %s: contains known version (main mode)", name)
                     continue
 
             # check date cutoff
@@ -117,20 +144,18 @@ def scan_scrapy_directories(
                 d = datetime.datetime.strptime(date_str, DATE_FMT).date()
             except ValueError:
                 if verbose:
-                    logging.debug("Skipping %s: bad date %r", entry.name, date_str)
+                    logging.debug("Skipping %s: bad date %r", name, date_str)
                 continue
-            if d < cutoff:
-                #if verbose:
-                #    logging.debug("Skipping %s: %s older than %s", entry.name, d, cutoff)
+            if d < start_date or d > end_date:
+                if verbose:
+                    logging.debug("Skipping %s: %s outside window [%s, %s]", name, d, start_date, end_date)
                 continue
 
-            full = str(base / entry.name)
+            full = str(base / name)
             if verbose:
                 logging.debug("Accepting directory: %s", full)
             results.append(full)
 
-    except FileNotFoundError:
-        logging.error("Log directory not found: %s", base)
     except Exception:
         logging.exception("Error scanning directories")
 

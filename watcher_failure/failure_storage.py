@@ -60,13 +60,14 @@ class FailureStorage:
         self,
         version: Optional[str] = None,
         flavor: Optional[str] = None,
-        since_days: Optional[int] = None,
+        start_date: Optional[Any] = None,
+        end_date: Optional[Any] = None,
         error_msg: Optional[str] = None,
         top_n: int = 10,
     ) -> Dict[str, int]:
         """
         Retrieve the top failure reasons, filtered by optional version, flavor,
-        date range (since_days), or containing error_msg.
+        date range (start_date/end_date, inclusive), or containing error_msg.
         """
         if not self.conn:
             raise RuntimeError("Database not initialized. Call setup() first.")
@@ -80,10 +81,13 @@ class FailureStorage:
         if flavor:
             clauses.append("flavor = ?")
             params.append(flavor)
-        if since_days:
-            # date stored as 'YYYY-MM-DD', use SQLite date functions
-            clauses.append("date >= date('now', ?)")
-            params.append(f"-{since_days} days")
+        if start_date:
+            # date stored as 'YYYY-MM-DD'; isoformat() sorts/compares correctly as text
+            clauses.append("date >= ?")
+            params.append(start_date.isoformat())
+        if end_date:
+            clauses.append("date <= ?")
+            params.append(end_date.isoformat())
         if error_msg:
             clauses.append("reason LIKE ?")
             params.append(f"%{error_msg}%")

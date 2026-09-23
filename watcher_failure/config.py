@@ -21,6 +21,8 @@ class Config:
         keep_db: bool = False,
         bot: bool = False,
         verbose: bool = False,
+        start_date: Optional[datetime.date] = None,
+        end_date: Optional[datetime.date] = None,
     ) -> None:
         self.db_name = db_name
         self.email = email
@@ -34,6 +36,16 @@ class Config:
         self.keep_db = keep_db
         self.bot = bot
         self.verbose = verbose
+
+        # Date window to scan/report over. Explicit --start-date/--end-date
+        # take precedence; otherwise derive a `days`-wide window ending
+        # today, same as before --start-date/--end-date existed. Resolved
+        # once here so scanning, storage, and reporting all agree on the
+        # same window instead of each recomputing "today" independently.
+        if start_date and end_date and start_date > end_date:
+            raise ValueError(f"start_date ({start_date}) is after end_date ({end_date})")
+        self.end_date = end_date or datetime.date.today()
+        self.start_date = start_date or (self.end_date - datetime.timedelta(days=days))
 
         # supported versions and flavors
         self.versions = ['quincy', 'squid', 'main', 'reef', 'tentacle']
@@ -78,4 +90,6 @@ class Config:
             keep_db=args.keep_db,
             bot=args.bot,
             verbose=args.verbose,
+            start_date=getattr(args, 'start_date', None),
+            end_date=getattr(args, 'end_date', None),
         )

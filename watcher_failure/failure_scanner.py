@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import List
 from .reason_conversion import reason_conversion
 
-from .scan_scrapy_directories import scan_scrapy_directories
+from .scan_scrapy_directories import scan_scrapy_directories, list_dir_names
 from .config import Config
 from typing import Tuple, Dict, List
 
@@ -190,6 +190,13 @@ class FailureScanner:
         }
         logger.debug("Grouped directories initialized: %s", grouped_dirs)
 
+        # one directory listing for the whole tree scan — scan_scrapy_directories
+        # used to re-walk `self.base` from scratch for every (version, flavor)
+        # combo, which on a large flat archive directory (e.g. a slow NFS
+        # mount) meant redoing the expensive part of the work N times over.
+        dir_names = list_dir_names(str(self.base))
+        logger.debug("Listed %d entries under %s", len(dir_names), self.base)
+
         for version in self.cfg.versions:
             
             for flavor in self.cfg.flavors:
@@ -205,7 +212,8 @@ class FailureScanner:
                 logger.debug("Tree scan for version=%s flavor=%s suite_name=%s users=%s", version, flavor, suite_name, bot_users)
                 dirs = scan_scrapy_directories(
                     log_directory=str(self.base),
-                    days=self.cfg.days,
+                    start_date=self.cfg.start_date,
+                    end_date=self.cfg.end_date,
                     # drop db_name here if it's not needed for scanning
                     user_name=bot_users,
                     suite_name=suite_name,
@@ -213,6 +221,7 @@ class FailureScanner:
                     branch_name=self.cfg.branch_name,
                     flavor=flavor,
                     verbose=self.cfg.verbose,
+                    dir_names=dir_names,
                 )
                 grouped_dirs[version][flavor] = dirs
                 logger.debug("Found %s directories for version=%s flavor=%s", dirs, version, flavor)

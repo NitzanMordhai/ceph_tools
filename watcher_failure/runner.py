@@ -52,12 +52,16 @@ class Runner:
                     stats_by_vf[version][flavor] = self.storage.fetch_statistics(
                         version=version,
                         flavor=flavor,
-                        since_days=self.cfg.days,
+                        start_date=self.cfg.start_date,
+                        end_date=self.cfg.end_date,
                         error_msg=self.cfg.error_message,
                         top_n=10,
                     )
 
         else:
+            # single-dir mode: no date filter — the directory itself is the
+            # explicit target regardless of its date, same as before
+            # --start-date/--end-date existed.
             stats = self.storage.fetch_statistics(top_n=10)
             stats_by_vf[key] = {self.cfg.flavor: stats}
 
